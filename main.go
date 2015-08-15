@@ -25,7 +25,8 @@ var (
 
 func main() {
 	log.SetOutput(os.Stderr)
-	kingpin.Version(VERSION)
+	cli.Version(VERSION)
+	cli.Author(AUTHOR)
 	_, err := cli.Parse(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
