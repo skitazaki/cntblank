@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
@@ -32,25 +33,43 @@ type Report struct {
 
 // Output field.
 type ReportField struct {
-	seq       int
-	name      string
-	blank     int
-	minLength int
-	maxLength int
+	seq        int
+	name       string
+	blank      int
+	minLength  int
+	maxLength  int
+	minimum    int
+	maximum    int
+	minimumF   float64
+	maximumF   float64
+	trueCount  int
+	falseCount int
+	intType    int
+	floatType  int
+	boolType   int
 }
 
 func (r *ReportField) header() []string {
-	s := make([]string, 6)
-	s[0] = "seq"
-	s[1] = "Name"
-	s[2] = "#Blank"
-	s[3] = "%Blank"
-	s[4] = "MinLength"
-	s[5] = "MaxLength"
-	return s
+	return []string{
+		"seq",
+		"Name",
+		"#Blank",
+		"%Blank",
+		"MinLength",
+		"MaxLength",
+		"#Int",
+		"#Float",
+		"#Bool",
+		"Minimum",
+		"Maximum",
+		"MinimumF",
+		"MaximumF",
+		"#True",
+		"#False",
+	}
 }
 func (r *ReportField) format(total int) []string {
-	s := make([]string, 6)
+	s := make([]string, 15)
 	s[0] = fmt.Sprint(r.seq)
 	s[1] = r.name
 	s[2] = fmt.Sprint(r.blank)
@@ -65,6 +84,42 @@ func (r *ReportField) format(total int) []string {
 		s[5] = fmt.Sprint(r.maxLength)
 	} else {
 		s[5] = ""
+	}
+	if r.intType > 0 {
+		s[6] = fmt.Sprint(r.intType)
+	} else {
+		s[6] = ""
+	}
+	if r.floatType > 0 {
+		s[7] = fmt.Sprint(r.floatType)
+	} else {
+		s[7] = ""
+	}
+	if r.boolType > 0 {
+		s[8] = fmt.Sprint(r.boolType)
+	} else {
+		s[8] = ""
+	}
+	if r.intType > 0 {
+		s[9] = fmt.Sprint(r.minimum)
+		s[10] = fmt.Sprint(r.maximum)
+	} else {
+		s[9] = ""
+		s[10] = ""
+	}
+	if r.floatType > 0 {
+		s[11] = fmt.Sprintf("%.4f", r.minimumF)
+		s[12] = fmt.Sprintf("%.4f", r.maximumF)
+	} else {
+		s[11] = ""
+		s[12] = ""
+	}
+	if r.boolType > 0 {
+		s[13] = fmt.Sprint(r.trueCount)
+		s[14] = fmt.Sprint(r.falseCount)
+	} else {
+		s[13] = ""
+		s[14] = ""
 	}
 	return s
 }
@@ -99,14 +154,48 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 		if len(record[i]) == 0 {
 			nullCount++
 			f.blank++
-		} else {
-			stringLength := utf8.RuneCountInString(record[i])
-			if f.minLength == 0 || f.minLength > stringLength {
-				f.minLength = stringLength
+			continue
+		}
+		stringLength := utf8.RuneCountInString(record[i])
+		if f.minLength == 0 || f.minLength > stringLength {
+			f.minLength = stringLength
+		}
+		if f.maxLength < stringLength {
+			f.maxLength = stringLength
+		}
+		if valInt, err := strconv.Atoi(record[i]); err == nil {
+			if f.intType == 0 {
+				f.minimum = valInt
+				f.maximum = valInt
+			} else {
+				if valInt < f.minimum {
+					f.minimum = valInt
+				}
+				if valInt > f.maximum {
+					f.maximum = valInt
+				}
 			}
-			if f.maxLength < stringLength {
-				f.maxLength = stringLength
+			f.intType++
+		} else if valFloat, err := strconv.ParseFloat(record[i], 64); err == nil {
+			if f.floatType == 0 {
+				f.minimumF = valFloat
+				f.maximumF = valFloat
+			} else {
+				if valFloat < f.minimumF {
+					f.minimumF = valFloat
+				}
+				if valFloat > f.maximumF {
+					f.maximumF = valFloat
+				}
 			}
+			f.floatType++
+		} else if valBool, err := strconv.ParseBool(record[i]); err == nil {
+			if valBool {
+				f.trueCount++
+			} else {
+				f.falseCount++
+			}
+			f.boolType++
 		}
 	}
 	return nullCount
