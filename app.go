@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
@@ -23,9 +24,10 @@ type Application struct {
 
 // Calculate report.
 type Report struct {
-	path    string
-	records int
-	fields  []ReportField
+	path      string
+	hasHeader bool
+	records   int
+	fields    []*ReportField
 }
 
 // Output field.
@@ -67,6 +69,49 @@ func (r *ReportField) format(total int) []string {
 	return s
 }
 
+func (r *Report) header(record []string) error {
+	if len(record) == 0 {
+		return fmt.Errorf("header record has no elements.")
+	}
+	for i := 0; i < len(record); i++ {
+		f := new(ReportField)
+		f.seq = i + 1
+		f.name = record[i]
+		r.fields = append(r.fields, f)
+	}
+	r.hasHeader = true
+	return nil
+}
+
+func (r *Report) parseRecord(record []string) (nullCount int) {
+	r.records++
+	size := len(record)
+	if size > len(r.fields) {
+		for i := len(r.fields); i < size; i++ {
+			f := new(ReportField)
+			f.seq = i + 1
+			f.name = fmt.Sprintf("Column%03d", i+1)
+			r.fields = append(r.fields, f)
+		}
+	}
+	for i := 0; i < size; i++ {
+		f := r.fields[i]
+		if len(record[i]) == 0 {
+			nullCount++
+			f.blank++
+		} else {
+			stringLength := utf8.RuneCountInString(record[i])
+			if f.minLength == 0 || f.minLength > stringLength {
+				f.minLength = stringLength
+			}
+			if f.maxLength < stringLength {
+				f.maxLength = stringLength
+			}
+		}
+	}
+	return nullCount
+}
+
 // Run application main logic.
 func (a *Application) run(path string, encoding string, delimiter string,
 	noHeader bool, strict bool) error {
@@ -82,12 +127,6 @@ func (a *Application) run(path string, encoding string, delimiter string,
 		defer fp.Close()
 		buffer = bufio.NewReader(fp)
 		a.logfields = log.Fields{"path": path}
-		if a.putMeta {
-			preamble := make([]string, 2)
-			preamble[0] = "# File"
-			preamble[1] = path
-			a.writer.Write(preamble)
-		}
 	} else {
 		buffer = bufio.NewReader(os.Stdin)
 		a.logfields = log.Fields{}
@@ -115,6 +154,7 @@ func (a *Application) run(path string, encoding string, delimiter string,
 		logger.Error(err)
 		return err
 	}
+	report.path = path
 	a.putReport(*report)
 	return nil
 }
@@ -140,92 +180,76 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bo
 	} else {
 		reader.FieldsPerRecord = -1
 	}
-	fields := make(map[int]*ReportField)
+	lines := 0
+	report = new(Report)
 	if noHeader {
 		logger.Info("start parsing without header row")
 	} else {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
+		lines++
 		if err == io.EOF {
 			return nil, fmt.Errorf("reader is empty")
 		} else if err != nil {
 			logger.Error(err)
 			return nil, err
 		}
-		for i := 0; i < len(record); i++ {
-			f := new(ReportField)
-			f.seq = i + 1
-			f.name = record[i]
-			fields[i] = f
+		err = report.header(record)
+		if err != nil {
+			logger.Error(err)
+			return nil, err
 		}
-		logger.Info("start parsing with ", len(fields), " columns.")
+		logger.Info("start parsing with ", len(report.fields), " columns.")
 	}
-	recordCount := 0
 	errCount := 0
 	for {
 		record, err := reader.Read()
+		lines++
 		if err == io.EOF {
+			lines--
 			break
 		} else if err != nil {
-			logger.Error(err, ", #record", recordCount-1)
-			recordCount++
+			logger.Error(err, ", #line", lines)
 			errCount++
 			if errCount > 100 {
 				return nil, fmt.Errorf("too many error lines")
 			}
 			continue
 		}
-		nullCount := 0
-		for i := 0; i < len(record); i++ {
-			f, ok := fields[i]
-			if !ok {
-				f = new(ReportField)
-				f.seq = i + 1
-				f.name = fmt.Sprintf("Column%03d", i+1)
-				fields[i] = f
-			}
-			if len(record[i]) == 0 {
-				nullCount++
-				f.blank++
-			} else {
-				stringLength := utf8.RuneCountInString(record[i])
-				if f.minLength == 0 || f.minLength > stringLength {
-					f.minLength = stringLength
-				}
-				if f.maxLength < stringLength {
-					f.maxLength = stringLength
-				}
-			}
-		}
+		nullCount := report.parseRecord(record)
 		if nullCount > 0 {
-			logger.Debugf("record #%d has %d fields with %d NULL(s).",
-				recordCount, len(record), nullCount)
+			logger.Debugf("line #%d has %d fields with %d NULL(s).",
+				lines, len(record), nullCount)
 		}
-		recordCount++
-		if recordCount%1000000 == 0 {
-			logger.Info("==> Processed ", recordCount, " lines <==")
+		if lines%1000000 == 0 {
+			logger.Info("==> Processed ", lines, " lines <==")
 		}
 	}
-	columnSize := len(fields)
-	logger.Infof("finish parsing %d records with %d columns. %d errors detected.",
-		recordCount, columnSize, errCount)
-	report = new(Report)
-	report.records = recordCount
-	report.fields = make([]ReportField, columnSize)
-	for i := 0; i < columnSize; i++ {
-		report.fields[i] = *fields[i]
-	}
+	logger.Infof("finish parsing %d lines to get %d records with %d columns. %d errors detected.",
+		lines, report.records, len(report.fields), errCount)
 	return report, nil
 }
 
 func (a *Application) putReport(report Report) {
 	if a.putMeta {
-		preamble := make([]string, 2)
+		preamble := make([]string, 3)
+		if len(report.path) > 0 {
+			preamble[0] = "# File"
+			preamble[1] = report.path
+			preamble[2] = filepath.Base(report.path)
+			a.writer.Write(preamble)
+		}
 		preamble[0] = "# Field"
 		preamble[1] = fmt.Sprint(len(report.fields))
+		if report.hasHeader {
+			preamble[2] = "(has header)"
+		} else {
+			preamble[2] = ""
+		}
 		a.writer.Write(preamble)
 		preamble[0] = "# Record"
 		preamble[1] = fmt.Sprint(report.records)
+		preamble[2] = ""
 		a.writer.Write(preamble)
 	}
 	// Put header line.
