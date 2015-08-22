@@ -30,35 +30,49 @@ type Report struct {
 
 // Output field.
 type ReportField struct {
-	seq   int
-	name  string
-	blank int
+	seq       int
+	name      string
+	blank     int
+	minLength int
+	maxLength int
 }
 
 func (r *ReportField) header() []string {
-	s := make([]string, 4)
+	s := make([]string, 6)
 	s[0] = "seq"
 	s[1] = "Name"
 	s[2] = "#Blank"
 	s[3] = "%Blank"
+	s[4] = "MinLength"
+	s[5] = "MaxLength"
 	return s
 }
 func (r *ReportField) format(total int) []string {
-	s := make([]string, 4)
+	s := make([]string, 6)
 	s[0] = fmt.Sprint(r.seq)
 	s[1] = r.name
 	s[2] = fmt.Sprint(r.blank)
 	ratio := float64(r.blank) / float64(total) * 100
 	s[3] = fmt.Sprintf("%02.4f", ratio)
+	if r.minLength > 0 {
+		s[4] = fmt.Sprint(r.minLength)
+	} else {
+		s[4] = ""
+	}
+	if r.maxLength > 0 {
+		s[5] = fmt.Sprint(r.maxLength)
+	} else {
+		s[5] = ""
+	}
 	return s
 }
 
 // Run application main logic.
-func (a *Application) run(path *string, encoding *string, delimiter *string,
+func (a *Application) run(path string, encoding string, delimiter string,
 	noHeader bool, strict bool) error {
 	var buffer *bufio.Reader
-	if path != nil && len(*path) > 0 {
-		fp, err := os.Open(*path)
+	if len(path) > 0 {
+		fp, err := os.Open(path)
 		// TODO: Check `fp` is file or directory.
 		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
 		if err != nil {
@@ -67,11 +81,11 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 		}
 		defer fp.Close()
 		buffer = bufio.NewReader(fp)
-		a.logfields = log.Fields{"path": *path}
+		a.logfields = log.Fields{"path": path}
 		if a.putMeta {
 			preamble := make([]string, 2)
 			preamble[0] = "# File"
-			preamble[1] = *path
+			preamble[1] = path
 			a.writer.Write(preamble)
 		}
 	} else {
@@ -82,8 +96,8 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 	logger := log.WithFields(a.logfields)
 
 	var reader *csv.Reader
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			logger.Info("use ShiftJIS decoder for input.")
 			decoder := japanese.ShiftJIS.NewDecoder()
 			r := transform.NewReader(buffer, decoder)
@@ -106,10 +120,10 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bool, strict bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			logger.Warn(err)
 			logger.Info("input delimiter option is invalid, but continue running.")
@@ -126,7 +140,7 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader b
 	} else {
 		reader.FieldsPerRecord = -1
 	}
-	header := make(map[int]string)
+	fields := make(map[int]*ReportField)
 	if noHeader {
 		logger.Info("start parsing without header row")
 	} else {
@@ -139,13 +153,15 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader b
 			return nil, err
 		}
 		for i := 0; i < len(record); i++ {
-			header[i] = record[i]
+			f := new(ReportField)
+			f.seq = i + 1
+			f.name = record[i]
+			fields[i] = f
 		}
-		logger.Info("start parsing with ", len(header), " columns header.")
+		logger.Info("start parsing with ", len(fields), " columns.")
 	}
 	recordCount := 0
 	errCount := 0
-	nullColumn := make(map[int]int)
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -161,13 +177,24 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader b
 		}
 		nullCount := 0
 		for i := 0; i < len(record); i++ {
-			_, ok := header[i]
+			f, ok := fields[i]
 			if !ok {
-				header[i] = fmt.Sprintf("Column%03d", i+1)
+				f = new(ReportField)
+				f.seq = i + 1
+				f.name = fmt.Sprintf("Column%03d", i+1)
+				fields[i] = f
 			}
 			if len(record[i]) == 0 {
 				nullCount++
-				nullColumn[i]++
+				f.blank++
+			} else {
+				stringLength := utf8.RuneCountInString(record[i])
+				if f.minLength == 0 || f.minLength > stringLength {
+					f.minLength = stringLength
+				}
+				if f.maxLength < stringLength {
+					f.maxLength = stringLength
+				}
 			}
 		}
 		if nullCount > 0 {
@@ -179,20 +206,14 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader b
 			logger.Info("==> Processed ", recordCount, " lines <==")
 		}
 	}
+	columnSize := len(fields)
 	logger.Infof("finish parsing %d records with %d columns. %d errors detected.",
-		recordCount, len(header), errCount)
+		recordCount, columnSize, errCount)
 	report = new(Report)
 	report.records = recordCount
-	report.fields = make([]ReportField, len(header))
-	for i := 0; i < len(header); i++ {
-		cnt, ok := nullColumn[i]
-		r := new(ReportField)
-		r.seq = i + 1
-		r.name = header[i]
-		if ok {
-			r.blank = cnt
-		}
-		report.fields[i] = *r
+	report.fields = make([]ReportField, columnSize)
+	for i := 0; i < columnSize; i++ {
+		report.fields[i] = *fields[i]
 	}
 	return report, nil
 }
@@ -218,20 +239,20 @@ func (a *Application) putReport(report Report) {
 }
 
 // Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding *string, delimiter *string, meta bool) (a *Application, err error) {
+func newApplication(writer io.Writer, encoding string, delimiter string, meta bool) (a *Application, err error) {
 	a = new(Application)
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			log.Info("use ShiftJIS encoder for output.")
 			encoder := japanese.ShiftJIS.NewEncoder()
 			writer = transform.NewWriter(writer, encoder)
 		} else {
-			log.Warn("unknown encoding: ", *encoding)
+			log.Warn("unknown encoding: ", encoding)
 		}
 	}
 	a.writer = csv.NewWriter(writer)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			log.Warn(err)
 			log.Info("output delimiter option is invalid, but continue running.")

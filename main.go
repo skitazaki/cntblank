@@ -50,10 +50,10 @@ func main() {
 		output = os.Stdout
 	}
 	// Run main application logic.
-	app, err := newApplication(output, cliOutEncoding, cliOutDelimiter, *cliOutMeta)
+	app, err := newApplication(output, *cliOutEncoding, *cliOutDelimiter, *cliOutMeta)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	app.run(cliTabularFile, cliInEncoding, cliInDelimiter, *cliNoHeader, *cliStrict)
+	app.run(*cliTabularFile, *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
 }
