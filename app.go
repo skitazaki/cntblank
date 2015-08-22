@@ -68,11 +68,11 @@ func (r *ReportField) format(total int) []string {
 }
 
 // Run application main logic.
-func (a *Application) run(path *string, encoding *string, delimiter *string,
+func (a *Application) run(path string, encoding string, delimiter string,
 	noHeader bool, strict bool) error {
 	var buffer *bufio.Reader
-	if path != nil && len(*path) > 0 {
-		fp, err := os.Open(*path)
+	if len(path) > 0 {
+		fp, err := os.Open(path)
 		// TODO: Check `fp` is file or directory.
 		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
 		if err != nil {
@@ -81,11 +81,11 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 		}
 		defer fp.Close()
 		buffer = bufio.NewReader(fp)
-		a.logfields = log.Fields{"path": *path}
+		a.logfields = log.Fields{"path": path}
 		if a.putMeta {
 			preamble := make([]string, 2)
 			preamble[0] = "# File"
-			preamble[1] = *path
+			preamble[1] = path
 			a.writer.Write(preamble)
 		}
 	} else {
@@ -96,8 +96,8 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 	logger := log.WithFields(a.logfields)
 
 	var reader *csv.Reader
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			logger.Info("use ShiftJIS decoder for input.")
 			decoder := japanese.ShiftJIS.NewDecoder()
 			r := transform.NewReader(buffer, decoder)
@@ -120,10 +120,10 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bool, strict bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			logger.Warn(err)
 			logger.Info("input delimiter option is invalid, but continue running.")
@@ -239,20 +239,20 @@ func (a *Application) putReport(report Report) {
 }
 
 // Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding *string, delimiter *string, meta bool) (a *Application, err error) {
+func newApplication(writer io.Writer, encoding string, delimiter string, meta bool) (a *Application, err error) {
 	a = new(Application)
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			log.Info("use ShiftJIS encoder for output.")
 			encoder := japanese.ShiftJIS.NewEncoder()
 			writer = transform.NewWriter(writer, encoder)
 		} else {
-			log.Warn("unknown encoding: ", *encoding)
+			log.Warn("unknown encoding: ", encoding)
 		}
 	}
 	a.writer = csv.NewWriter(writer)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			log.Warn(err)
 			log.Info("output delimiter option is invalid, but continue running.")
