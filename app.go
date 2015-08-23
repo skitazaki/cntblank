@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strconv"
 	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
@@ -23,42 +25,188 @@ type Application struct {
 
 // Calculate report.
 type Report struct {
-	path    string
-	records int
-	fields  []ReportField
+	path      string
+	hasHeader bool
+	records   int
+	fields    []*ReportField
 }
 
 // Output field.
 type ReportField struct {
-	seq   int
-	name  string
-	blank int
+	seq        int
+	name       string
+	blank      int
+	minLength  int
+	maxLength  int
+	minimum    int
+	maximum    int
+	minimumF   float64
+	maximumF   float64
+	trueCount  int
+	falseCount int
+	intType    int
+	floatType  int
+	boolType   int
 }
 
 func (r *ReportField) header() []string {
-	s := make([]string, 4)
-	s[0] = "seq"
-	s[1] = "Name"
-	s[2] = "#Blank"
-	s[3] = "%Blank"
-	return s
+	return []string{
+		"seq",
+		"Name",
+		"#Blank",
+		"%Blank",
+		"MinLength",
+		"MaxLength",
+		"#Int",
+		"#Float",
+		"#Bool",
+		"Minimum",
+		"Maximum",
+		"MinimumF",
+		"MaximumF",
+		"#True",
+		"#False",
+	}
 }
 func (r *ReportField) format(total int) []string {
-	s := make([]string, 4)
+	s := make([]string, 15)
 	s[0] = fmt.Sprint(r.seq)
 	s[1] = r.name
 	s[2] = fmt.Sprint(r.blank)
 	ratio := float64(r.blank) / float64(total) * 100
 	s[3] = fmt.Sprintf("%02.4f", ratio)
+	if r.minLength > 0 {
+		s[4] = fmt.Sprint(r.minLength)
+	} else {
+		s[4] = ""
+	}
+	if r.maxLength > 0 {
+		s[5] = fmt.Sprint(r.maxLength)
+	} else {
+		s[5] = ""
+	}
+	if r.intType > 0 {
+		s[6] = fmt.Sprint(r.intType)
+	} else {
+		s[6] = ""
+	}
+	if r.floatType > 0 {
+		s[7] = fmt.Sprint(r.floatType)
+	} else {
+		s[7] = ""
+	}
+	if r.boolType > 0 {
+		s[8] = fmt.Sprint(r.boolType)
+	} else {
+		s[8] = ""
+	}
+	if r.intType > 0 {
+		s[9] = fmt.Sprint(r.minimum)
+		s[10] = fmt.Sprint(r.maximum)
+	} else {
+		s[9] = ""
+		s[10] = ""
+	}
+	if r.floatType > 0 {
+		s[11] = fmt.Sprintf("%.4f", r.minimumF)
+		s[12] = fmt.Sprintf("%.4f", r.maximumF)
+	} else {
+		s[11] = ""
+		s[12] = ""
+	}
+	if r.boolType > 0 {
+		s[13] = fmt.Sprint(r.trueCount)
+		s[14] = fmt.Sprint(r.falseCount)
+	} else {
+		s[13] = ""
+		s[14] = ""
+	}
 	return s
 }
 
+func (r *Report) header(record []string) error {
+	if len(record) == 0 {
+		return fmt.Errorf("header record has no elements.")
+	}
+	for i := 0; i < len(record); i++ {
+		f := new(ReportField)
+		f.seq = i + 1
+		f.name = record[i]
+		r.fields = append(r.fields, f)
+	}
+	r.hasHeader = true
+	return nil
+}
+
+func (r *Report) parseRecord(record []string) (nullCount int) {
+	r.records++
+	size := len(record)
+	if size > len(r.fields) {
+		for i := len(r.fields); i < size; i++ {
+			f := new(ReportField)
+			f.seq = i + 1
+			f.name = fmt.Sprintf("Column%03d", i+1)
+			r.fields = append(r.fields, f)
+		}
+	}
+	for i := 0; i < size; i++ {
+		f := r.fields[i]
+		if len(record[i]) == 0 {
+			nullCount++
+			f.blank++
+			continue
+		}
+		stringLength := utf8.RuneCountInString(record[i])
+		if f.minLength == 0 || f.minLength > stringLength {
+			f.minLength = stringLength
+		}
+		if f.maxLength < stringLength {
+			f.maxLength = stringLength
+		}
+		if valInt, err := strconv.Atoi(record[i]); err == nil {
+			if f.intType == 0 {
+				f.minimum = valInt
+				f.maximum = valInt
+			} else {
+				if valInt < f.minimum {
+					f.minimum = valInt
+				}
+				if valInt > f.maximum {
+					f.maximum = valInt
+				}
+			}
+			f.intType++
+		} else if valFloat, err := strconv.ParseFloat(record[i], 64); err == nil {
+			if f.floatType == 0 {
+				f.minimumF = valFloat
+				f.maximumF = valFloat
+			} else {
+				if valFloat < f.minimumF {
+					f.minimumF = valFloat
+				}
+				if valFloat > f.maximumF {
+					f.maximumF = valFloat
+				}
+			}
+			f.floatType++
+		} else if valBool, err := strconv.ParseBool(record[i]); err == nil {
+			if valBool {
+				f.trueCount++
+			} else {
+				f.falseCount++
+			}
+			f.boolType++
+		}
+	}
+	return nullCount
+}
+
 // Run application main logic.
-func (a *Application) run(path *string, encoding *string, delimiter *string,
+func (a *Application) run(path string, encoding string, delimiter string,
 	noHeader bool, strict bool) error {
 	var buffer *bufio.Reader
-	if path != nil && len(*path) > 0 {
-		fp, err := os.Open(*path)
+	if len(path) > 0 {
+		fp, err := os.Open(path)
 		// TODO: Check `fp` is file or directory.
 		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
 		if err != nil {
@@ -67,13 +215,7 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 		}
 		defer fp.Close()
 		buffer = bufio.NewReader(fp)
-		a.logfields = log.Fields{"path": *path}
-		if a.putMeta {
-			preamble := make([]string, 2)
-			preamble[0] = "# File"
-			preamble[1] = *path
-			a.writer.Write(preamble)
-		}
+		a.logfields = log.Fields{"path": path}
 	} else {
 		buffer = bufio.NewReader(os.Stdin)
 		a.logfields = log.Fields{}
@@ -82,8 +224,8 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 	logger := log.WithFields(a.logfields)
 
 	var reader *csv.Reader
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			logger.Info("use ShiftJIS decoder for input.")
 			decoder := japanese.ShiftJIS.NewDecoder()
 			r := transform.NewReader(buffer, decoder)
@@ -101,15 +243,16 @@ func (a *Application) run(path *string, encoding *string, delimiter *string,
 		logger.Error(err)
 		return err
 	}
+	report.path = path
 	a.putReport(*report)
 	return nil
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bool, strict bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			logger.Warn(err)
 			logger.Info("input delimiter option is invalid, but continue running.")
@@ -126,85 +269,76 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter *string, noHeader b
 	} else {
 		reader.FieldsPerRecord = -1
 	}
-	header := make(map[int]string)
+	lines := 0
+	report = new(Report)
 	if noHeader {
 		logger.Info("start parsing without header row")
 	} else {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
+		lines++
 		if err == io.EOF {
 			return nil, fmt.Errorf("reader is empty")
 		} else if err != nil {
 			logger.Error(err)
 			return nil, err
 		}
-		for i := 0; i < len(record); i++ {
-			header[i] = record[i]
+		err = report.header(record)
+		if err != nil {
+			logger.Error(err)
+			return nil, err
 		}
-		logger.Info("start parsing with ", len(header), " columns header.")
+		logger.Info("start parsing with ", len(report.fields), " columns.")
 	}
-	recordCount := 0
 	errCount := 0
-	nullColumn := make(map[int]int)
 	for {
 		record, err := reader.Read()
+		lines++
 		if err == io.EOF {
+			lines--
 			break
 		} else if err != nil {
-			logger.Error(err, ", #record", recordCount-1)
-			recordCount++
+			logger.Error(err, ", #line", lines)
 			errCount++
 			if errCount > 100 {
 				return nil, fmt.Errorf("too many error lines")
 			}
 			continue
 		}
-		nullCount := 0
-		for i := 0; i < len(record); i++ {
-			_, ok := header[i]
-			if !ok {
-				header[i] = fmt.Sprintf("Column%03d", i+1)
-			}
-			if len(record[i]) == 0 {
-				nullCount++
-				nullColumn[i]++
-			}
-		}
+		nullCount := report.parseRecord(record)
 		if nullCount > 0 {
-			logger.Debugf("record #%d has %d fields with %d NULL(s).",
-				recordCount, len(record), nullCount)
+			logger.Debugf("line #%d has %d fields with %d NULL(s).",
+				lines, len(record), nullCount)
 		}
-		recordCount++
-		if recordCount%1000000 == 0 {
-			logger.Info("==> Processed ", recordCount, " lines <==")
+		if lines%1000000 == 0 {
+			logger.Info("==> Processed ", lines, " lines <==")
 		}
 	}
-	logger.Infof("finish parsing %d records with %d columns. %d errors detected.",
-		recordCount, len(header), errCount)
-	report = new(Report)
-	report.records = recordCount
-	report.fields = make([]ReportField, len(header))
-	for i := 0; i < len(header); i++ {
-		cnt, ok := nullColumn[i]
-		r := new(ReportField)
-		r.seq = i + 1
-		r.name = header[i]
-		if ok {
-			r.blank = cnt
-		}
-		report.fields[i] = *r
-	}
+	logger.Infof("finish parsing %d lines to get %d records with %d columns. %d errors detected.",
+		lines, report.records, len(report.fields), errCount)
 	return report, nil
 }
 
 func (a *Application) putReport(report Report) {
 	if a.putMeta {
-		preamble := make([]string, 2)
+		preamble := make([]string, 3)
+		if len(report.path) > 0 {
+			preamble[0] = "# File"
+			preamble[1] = report.path
+			preamble[2] = filepath.Base(report.path)
+			a.writer.Write(preamble)
+		}
 		preamble[0] = "# Field"
 		preamble[1] = fmt.Sprint(len(report.fields))
+		if report.hasHeader {
+			preamble[2] = "(has header)"
+		} else {
+			preamble[2] = ""
+		}
 		a.writer.Write(preamble)
 		preamble[0] = "# Record"
 		preamble[1] = fmt.Sprint(report.records)
+		preamble[2] = ""
 		a.writer.Write(preamble)
 	}
 	// Put header line.
@@ -218,20 +352,20 @@ func (a *Application) putReport(report Report) {
 }
 
 // Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding *string, delimiter *string, meta bool) (a *Application, err error) {
+func newApplication(writer io.Writer, encoding string, delimiter string, meta bool) (a *Application, err error) {
 	a = new(Application)
-	if encoding != nil && len(*encoding) > 0 {
-		if *encoding == "sjis" {
+	if len(encoding) > 0 {
+		if encoding == "sjis" {
 			log.Info("use ShiftJIS encoder for output.")
 			encoder := japanese.ShiftJIS.NewEncoder()
 			writer = transform.NewWriter(writer, encoder)
 		} else {
-			log.Warn("unknown encoding: ", *encoding)
+			log.Warn("unknown encoding: ", encoding)
 		}
 	}
 	a.writer = csv.NewWriter(writer)
-	if delimiter != nil && len(*delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(*delimiter)
+	if len(delimiter) > 0 {
+		comma, err := utf8.DecodeRuneInString(delimiter)
 		if err == utf8.RuneError {
 			log.Warn(err)
 			log.Info("output delimiter option is invalid, but continue running.")

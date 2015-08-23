@@ -5,30 +5,29 @@ Count blank cells on text-based tabular data.
 Short examples:
 
 ```bash
-$ cntblank --output-meta examples/prefecture_jp.tsv
-INFO[0000] start parsing with 2 columns header.          path=examples/prefecture_jp.tsv
-INFO[0000] finish parsing 47 records with 2 columns. 0 errors detected.  path=examples/prefecture_jp.tsv
-# File  examples/prefecture_jp.tsv
-# Field 2
+$ ./cntblank --output-meta examples/prefecture_jp.tsv
+INFO[0000] start parsing with 2 columns.                 path=examples/prefecture_jp.tsv
+INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors detected.  path=examples/prefecture_jp.tsv
+# File          examples/prefecture_jp.tsv      prefecture_jp.tsv
+# Field         2                               (has header)
 # Record        47
-seq     Name    #Blank  %Blank
-1       都道府県コード  0       0.0000
-2       都道府県        0       0.0000
+seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   Minimum Maximum MinimumF        MaximumF        #True   #False
+1       都道府県コード  0       0.0000  2       2       47                      1       47
+2       都道府県        0       0.0000  3       4
 ```
 
 Since file argument is optional, it accepts standard input.
 
 ```bash
-$ curl -sL https://raw.githubusercontent.com/datasets/language-codes/master/data/ietf-language-tags.csv | ./cntblank --input-delimiter=,
-INFO[0005] start parsing with 6 columns header.
-INFO[0005] finish parsing 688 records with 6 columns. 0 errors detected.
-seq     Name    #Blank  %Blank
-1       lang    0       0.0000
-2       langType        0       0.0000
-3       territory       213     30.9593
-4       revGenDate      0       0.0000
-5       defs    0       0.0000
-6       file    0       0.0000
+$ curl -sL https://raw.githubusercontent.com/datasets/language-codes/master/data/ietf-language-tags.csv |
+      ./cntblank --input-delimiter=, 2>/dev/null | cut -f1-6 | expand -t 15
+seq            Name           #Blank         %Blank         MinLength      MaxLength
+1              lang           0              0.0000         2              14
+2              langType       0              0.0000         2              4
+3              territory      213            30.9593        2              3
+4              revGenDate     0              0.0000         10             10
+5              defs           0              0.0000         1              1
+6              file           0              0.0000         6              18
 ```
 
 ## Full Usage
@@ -64,10 +63,33 @@ Args:
   [<tabfile>]  Tabular data file.
 ```
 
+### Output fields
+
+| Name | Description |
+|------|-------------|
+| seq | Sequential number which starts with one. |
+| Name | Field name from first header line, otherwise "ColumnNNN" where NNN is sequential number. |
+| #Blank | Count of blank cells. |
+| %Blank | Percentage of blank cells. |
+| MinLength | Minimum length of valid cells. |
+| MaxLength | Maximum length of valid cells. |
+| #Int | Count of integer type cells. This may be blank. |
+| #Float | Count of float type cells. This may be blank. |
+| #Bool | Count of bool type cells. This may be blank. |
+| Minimum | Minimum integer value. |
+| Maximum | Maximum integer value. |
+| MinimumF | Minimum float value. |
+| MaximumF | Maximum float value. |
+| #True | Count of cells which should be treated as boolean true. |
+| #False | Count of cells which should be treated as boolean false. |
+
+Since type detecton is done order by `int`, `float`, and `bool`, there is no relation with minimum/maximum integer value and minimum/maximum float value.
+And, "1" or "0" is not treated as boolean because it is treated as integer in the first detection logic.
+
 
 ## Development setup
 
-- Golang 1.4
+- Golang 1.5
 
 ### Library Dependency
 
