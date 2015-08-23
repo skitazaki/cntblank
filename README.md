@@ -89,7 +89,7 @@ And, "1" or "0" is not treated as boolean because it is treated as integer in th
 
 ## Development setup
 
-- Golang 1.4
+- Golang 1.5
 
 ### Library Dependency
 
