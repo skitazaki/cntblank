@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
@@ -131,7 +132,7 @@ func (r *Report) header(record []string) error {
 	for i := 0; i < len(record); i++ {
 		f := new(ReportField)
 		f.seq = i + 1
-		f.name = record[i]
+		f.name = strings.TrimSpace(record[i])
 		r.fields = append(r.fields, f)
 	}
 	r.hasHeader = true
@@ -151,19 +152,20 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 	}
 	for i := 0; i < size; i++ {
 		f := r.fields[i]
-		if len(record[i]) == 0 {
+		val := strings.TrimSpace(record[i])
+		if len(val) == 0 {
 			nullCount++
 			f.blank++
 			continue
 		}
-		stringLength := utf8.RuneCountInString(record[i])
+		stringLength := utf8.RuneCountInString(val)
 		if f.minLength == 0 || f.minLength > stringLength {
 			f.minLength = stringLength
 		}
 		if f.maxLength < stringLength {
 			f.maxLength = stringLength
 		}
-		if valInt, err := strconv.Atoi(record[i]); err == nil {
+		if valInt, err := strconv.Atoi(val); err == nil {
 			if f.intType == 0 {
 				f.minimum = valInt
 				f.maximum = valInt
@@ -176,7 +178,7 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 				}
 			}
 			f.intType++
-		} else if valFloat, err := strconv.ParseFloat(record[i], 64); err == nil {
+		} else if valFloat, err := strconv.ParseFloat(val, 64); err == nil {
 			if f.floatType == 0 {
 				f.minimumF = valFloat
 				f.maximumF = valFloat
@@ -189,7 +191,7 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 				}
 			}
 			f.floatType++
-		} else if valBool, err := strconv.ParseBool(record[i]); err == nil {
+		} else if valBool, err := strconv.ParseBool(val); err == nil {
 			if valBool {
 				f.trueCount++
 			} else {

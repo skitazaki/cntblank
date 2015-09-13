@@ -299,3 +299,57 @@ PI,3.1415926535897932384
 		t.Error("second field has invalid maxLength:", f.maxLength)
 	}
 }
+
+func TestTrimCell(t *testing.T) {
+	input := []byte(`key, value ," comment"
+PI,3.1415926535897932384,normal
+PI ,3.1415926535897932384 ,"blank after value "
+ PI, 3.1415926535897932384, blank before value
+ PI , 3.1415926535897932384 ," blank both of value "
+`)
+	buffer := new(bytes.Buffer)
+	w := bufio.NewWriter(buffer)
+	reader := csv.NewReader(bytes.NewBuffer(input))
+	app, _ := newApplication(w, "", "", false)
+	report, err := app.cntblank(reader, ",", false, false)
+	if err != nil {
+		t.Error(err)
+	}
+	if report.records == 4 {
+		t.Log("ok to read three records with header line.")
+	} else {
+		t.Error("fail to count invalid records:", report.records)
+	}
+	if len(report.fields) == 3 {
+		t.Log("ok to read three columns.")
+	} else {
+		t.Error("fail to count invalid columns:", len(report.fields))
+	}
+
+	for i, tc := range []struct {
+		fieldName string
+		minLength int
+		maxLength int
+	}{
+		{"key", 2, 2},
+		{"value", 21, 21},
+		{"comment", 6, 19},
+	} {
+		f := report.fields[i]
+		if f.name == tc.fieldName {
+			t.Logf("#%d field name is ok.", i+1)
+		} else {
+			t.Errorf("#%d field name is invalid: actual=\"%s\", expected=\"%s\"", i+1, f.name, tc.fieldName)
+		}
+		if f.minLength == tc.minLength {
+			t.Logf("#%d field minimum length is ok.", i+1)
+		} else {
+			t.Errorf("#%d field has invalid minLength: actual=%d, expected=%d", i+1, f.minLength, tc.minLength)
+		}
+		if f.maxLength == tc.maxLength {
+			t.Logf("#%d field maximum length is ok.", i+1)
+		} else {
+			t.Errorf("#%d field has invalid maxLength: actual=%d, expected=%d", i+1, f.maxLength, tc.maxLength)
+		}
+	}
+}
