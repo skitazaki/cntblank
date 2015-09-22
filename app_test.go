@@ -4,43 +4,58 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"testing"
 )
 
 func TestReport(t *testing.T) {
 	report := new(Report)
-	nullCount := report.parseRecord([]string{"a", "b", ""})
-	if nullCount == 1 {
-		t.Log("ok to return null count.")
-	} else {
-		t.Error("fail to return null count:", nullCount)
+	for i, tc := range []struct {
+		record     []string
+		nullCount  int
+		numRecords int
+		numFields  int
+	}{
+		{[]string{"a", "b", ""}, 1, 1, 3},
+		{[]string{"$C", "", "", "-1", "123", "3.14"}, 2, 2, 6},
+	} {
+		nullCount := report.parseRecord(tc.record)
+		if nullCount != tc.nullCount {
+			t.Errorf("[#%d] fail to return null count: actual=%d, expected=%d", i+1, nullCount, tc.nullCount)
+		}
+		if report.records != tc.numRecords {
+			t.Errorf("[#%d] fail to increment internal counter: actual=%d, expected=%d", i+1, report.records, tc.numRecords)
+		}
+		if len(report.fields) != tc.numFields {
+			t.Errorf("[#%d] fail to grow field: actual=%d, expected=%d", i+1, len(report.fields), tc.numFields)
+		}
 	}
-	if report.records == 1 {
-		t.Log("ok to parse one record.")
-	} else {
-		t.Error("fail to increment internal counter.")
-	}
-	if len(report.fields) == 3 {
-		t.Log("automatically grow field length to three.")
-	} else {
-		t.Error("fail to grow field:", report.fields)
-	}
-
-	nullCount = report.parseRecord([]string{"$C", "", "", "-1", "123", "3.14"})
-	if nullCount == 2 {
-		t.Log("ok to return null count.")
-	} else {
-		t.Error("fail to return null count:", nullCount)
-	}
-	if report.records == 2 {
-		t.Log("ok to parse more one record.")
-	} else {
-		t.Error("fail to increment internal counter.")
-	}
-	if len(report.fields) == 6 {
-		t.Log("automatically grow field length to six.")
-	} else {
-		t.Error("fail to grow field:", report.fields)
+	for i, tc := range []struct {
+		columnName string
+		blankCount string
+		blankRatio string
+	}{
+		{"Column001", "0", "0.0000"},
+		{"Column002", "1", "0.5000"},
+		{"Column003", "2", "1.0000"},
+	} {
+		f := report.fields[i]
+		r := f.format(report.records)
+		if len(r) != 15 {
+			t.Errorf("#%d field formatter returns invalid result, which has %d elements.", i+1, len(r))
+		}
+		if r[0] != fmt.Sprint(i+1) {
+			t.Errorf("#%d field has invalid sequence number: actual=%s, expected=%s", i+1, r[0], "1")
+		}
+		if r[1] != tc.columnName {
+			t.Errorf("#%d field has invalid column name: actual=%s, expected=%s", i+1, r[1], tc.columnName)
+		}
+		if r[2] != tc.blankCount {
+			t.Errorf("#%d field has invalid blank count: actual=%s, expected=%s", i+1, r[2], tc.blankCount)
+		}
+		if r[3] != tc.blankRatio {
+			t.Errorf("#%d field has invalid blank ratio: actual=%s, expected=%s", i+1, r[3], tc.blankRatio)
+		}
 	}
 }
 
@@ -297,5 +312,59 @@ PI,3.1415926535897932384
 		t.Log("maximum length of second field is 32.")
 	} else {
 		t.Error("second field has invalid maxLength:", f.maxLength)
+	}
+}
+
+func TestTrimCell(t *testing.T) {
+	input := []byte(`key, value ," comment"
+PI,3.1415926535897932384,normal
+PI ,3.1415926535897932384 ,"blank after value "
+ PI, 3.1415926535897932384, blank before value
+ PI , 3.1415926535897932384 ," blank both of value "
+`)
+	buffer := new(bytes.Buffer)
+	w := bufio.NewWriter(buffer)
+	reader := csv.NewReader(bytes.NewBuffer(input))
+	app, _ := newApplication(w, "", "", false)
+	report, err := app.cntblank(reader, ",", false, false)
+	if err != nil {
+		t.Error(err)
+	}
+	if report.records == 4 {
+		t.Log("ok to read three records with header line.")
+	} else {
+		t.Error("fail to count invalid records:", report.records)
+	}
+	if len(report.fields) == 3 {
+		t.Log("ok to read three columns.")
+	} else {
+		t.Error("fail to count invalid columns:", len(report.fields))
+	}
+
+	for i, tc := range []struct {
+		fieldName string
+		minLength int
+		maxLength int
+	}{
+		{"key", 2, 2},
+		{"value", 21, 21},
+		{"comment", 6, 19},
+	} {
+		f := report.fields[i]
+		if f.name == tc.fieldName {
+			t.Logf("#%d field name is ok.", i+1)
+		} else {
+			t.Errorf("#%d field name is invalid: actual=\"%s\", expected=\"%s\"", i+1, f.name, tc.fieldName)
+		}
+		if f.minLength == tc.minLength {
+			t.Logf("#%d field minimum length is ok.", i+1)
+		} else {
+			t.Errorf("#%d field has invalid minLength: actual=%d, expected=%d", i+1, f.minLength, tc.minLength)
+		}
+		if f.maxLength == tc.maxLength {
+			t.Logf("#%d field maximum length is ok.", i+1)
+		} else {
+			t.Errorf("#%d field has invalid maxLength: actual=%d, expected=%d", i+1, f.maxLength, tc.maxLength)
+		}
 	}
 }
