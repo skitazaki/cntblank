@@ -5,10 +5,10 @@ Count blank cells on text-based tabular data.
 Short examples:
 
 ```bash
-$ ./cntblank --output-meta examples/prefecture_jp.tsv
-INFO[0000] start parsing with 2 columns.                 path=examples/prefecture_jp.tsv
-INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors detected.  path=examples/prefecture_jp.tsv
-# File          examples/prefecture_jp.tsv      prefecture_jp.tsv
+$ ./cntblank --output-meta testdata/prefecture_jp.tsv
+INFO[0000] start parsing with 2 columns.                 path=testdata/prefecture_jp.tsv
+INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors detected.  path=testdata/prefecture_jp.tsv
+# File          testdata/prefecture_jp.tsv      prefecture_jp.tsv
 # Field         2                               (has header)
 # Record        47
 seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   Minimum Maximum MinimumF        MaximumF        #True   #False
@@ -24,7 +24,7 @@ $ curl -sL https://raw.githubusercontent.com/datasets/language-codes/master/data
 seq            Name           #Blank         %Blank         MinLength      MaxLength
 1              lang           0              0.0000         2              14
 2              langType       0              0.0000         2              4
-3              territory      213            0.3096        2              3
+3              territory      213            0.3096         2              3
 4              revGenDate     0              0.0000         10             10
 5              defs           0              0.0000         1              1
 6              file           0              0.0000         6              18
