@@ -74,8 +74,8 @@ func (r *ReportField) format(total int) []string {
 	s[0] = fmt.Sprint(r.seq)
 	s[1] = r.name
 	s[2] = fmt.Sprint(r.blank)
-	ratio := float64(r.blank) / float64(total) * 100
-	s[3] = fmt.Sprintf("%02.4f", ratio)
+	ratio := float64(r.blank) / float64(total)
+	s[3] = fmt.Sprintf("%.4f", ratio)
 	if r.minLength > 0 {
 		s[4] = fmt.Sprint(r.minLength)
 	} else {
