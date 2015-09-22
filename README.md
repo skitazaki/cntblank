@@ -24,7 +24,7 @@ $ curl -sL https://raw.githubusercontent.com/datasets/language-codes/master/data
 seq            Name           #Blank         %Blank         MinLength      MaxLength
 1              lang           0              0.0000         2              14
 2              langType       0              0.0000         2              4
-3              territory      213            30.9593        2              3
+3              territory      213            0.3096        2              3
 4              revGenDate     0              0.0000         10             10
 5              defs           0              0.0000         1              1
 6              file           0              0.0000         6              18
@@ -104,4 +104,3 @@ $ go build -o cntblank
 
 `build.sh` is a build script to generate binary files for multiple architecture
 using docker container.
-
