@@ -11,8 +11,8 @@ INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors de
 # File          testdata/prefecture_jp.tsv      prefecture_jp.tsv
 # Field         2                               (has header)
 # Record        47
-seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   Minimum Maximum MinimumF        MaximumF        #True   #False
-1       都道府県コード  0       0.0000  2       2       47                      1       47
+seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   #Time    Minimum Maximum #True   #False
+1       都道府県コード  0       0.0000  2       2       47       47               1       47
 2       都道府県        0       0.0000  3       4
 ```
 
@@ -76,15 +76,11 @@ Args:
 | #Int | Count of integer type cells. This may be blank. |
 | #Float | Count of float type cells. This may be blank. |
 | #Bool | Count of bool type cells. This may be blank. |
-| Minimum | Minimum integer value. |
-| Maximum | Maximum integer value. |
-| MinimumF | Minimum float value. |
-| MaximumF | Maximum float value. |
+| #Time | Count of time type cells. This may be blank. |
+| Minimum | Minimum value after guessing data type. |
+| Maximum | Maximum value after guessing data type. |
 | #True | Count of cells which should be treated as boolean true. |
 | #False | Count of cells which should be treated as boolean false. |
-
-Since type detecton is done order by `int`, `float`, and `bool`, there is no relation with minimum/maximum integer value and minimum/maximum float value.
-And, "1" or "0" is not treated as boolean because it is treated as integer in the first detection logic.
 
 
 ## Development setup
