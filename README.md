@@ -95,6 +95,13 @@ And, "1" or "0" is not treated as boolean because it is treated as integer in th
 
 - github.com/Sirupsen/logrus
 - gopkg.in/alecthomas/kingpin.v2
+- github.com/asaskevich/govalidator
+
+Setup using `Makefile` calling `go get -d`:
+
+```bash
+$ make setup
+```
 
 ### Build
 
@@ -103,4 +110,4 @@ $ go build -o cntblank
 ```
 
 `build.sh` is a build script to generate binary files for multiple architecture
-using docker container.
+using docker container. And, `make` wraps whole processes to generate binaries.
