@@ -78,156 +78,57 @@ func TestReportTypeDetection(t *testing.T) {
 		t.Error("fail to grow field:", report.fields)
 	}
 
-	f := report.fields[0]
-	if f.blank == 0 {
-		t.Log("ok to be filled.")
-	} else {
-		t.Error(f)
-	}
-	if f.intType == 6 {
-		t.Log("ok to count up integer type.")
-	} else {
-		t.Error(f)
-	}
-	if f.floatType == 0 {
-		t.Log("ok to stay zero for float type.")
-	} else {
-		t.Error(f)
-	}
-	if f.boolType == 0 {
-		t.Log("ok to stay zero for bool type.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimum == -456 {
-		t.Log("ok to calculate minimum value as -456.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximum == 987654321 {
-		t.Log("ok to calculate maximum value as 987654321.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimumF == 0 {
-		t.Log("ok not to calculate floating minimum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximumF == 0 {
-		t.Log("ok not to calculate floating maximum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.trueCount == 0 {
-		t.Log("ok not to calculate boolean value for true.")
-	} else {
-		t.Error(f)
-	}
-	if f.falseCount == 0 {
-		t.Log("ok not to calculate boolean value for false.")
-	} else {
-		t.Error(f)
-	}
-
-	f = report.fields[1]
-	if f.blank == 1 {
-		t.Log("ok to detect one blank cell.")
-	} else {
-		t.Error(f)
-	}
-	if f.intType == 0 {
-		t.Log("ok to stay zero integer type.")
-	} else {
-		t.Error(f)
-	}
-	if f.floatType != 3 {
-		t.Errorf("fail to count float type: actual=%d, expected=%d", f.floatType, 3)
-	}
-	if f.boolType == 0 {
-		t.Log("ok to stay zero for bool type.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimum == 0 {
-		t.Log("ok not to calculate minimum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximum == 0 {
-		t.Log("ok not to calculate maximum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimumF == -999.999 {
-		t.Log("ok to calculate minimum value as -999.999.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximumF == 42 {
-		t.Log("ok to calculate maximum value as 42 although originally 42.0.")
-	} else {
-		t.Error(f)
-	}
-	if f.trueCount == 0 {
-		t.Log("ok not to calculate boolean value for true.")
-	} else {
-		t.Error(f)
-	}
-	if f.falseCount == 0 {
-		t.Log("ok not to calculate boolean value for false.")
-	} else {
-		t.Error(f)
-	}
-	if f.fullWidth != 1 {
-		t.Errorf("fail to count full width: actual=%d, expected=%d", f.fullWidth, 1)
-	}
-
-	f = report.fields[2]
-	if f.intType == 0 {
-		t.Log("ok to stay zero integer type.")
-	} else {
-		t.Error(f)
-	}
-	if f.floatType == 0 {
-		t.Log("ok to stay zero for float type.")
-	} else {
-		t.Error(f)
-	}
-	if f.boolType == 6 {
-		t.Log("ok to count up for bool type.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimum == 0 {
-		t.Log("ok not to calculate minimum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximum == 0 {
-		t.Log("ok not to calculate maximum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.minimumF == 0 {
-		t.Log("ok not to calculate floating minimum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.maximumF == 0 {
-		t.Log("ok not to calculate floating maximum value.")
-	} else {
-		t.Error(f)
-	}
-	if f.trueCount == 3 {
-		t.Log("ok to calculate boolean value for true.")
-	} else {
-		t.Error(f)
-	}
-	if f.falseCount == 3 {
-		t.Log("ok to calculate boolean value for false.")
-	} else {
-		t.Error(f)
+	for i, tc := range []struct {
+		blank      int
+		minimum    int
+		maximum    int
+		minimumF   float64
+		maximumF   float64
+		trueCount  int
+		falseCount int
+		intType    int
+		floatType  int
+		boolType   int
+		fullWidth  int
+	}{
+		{0, -456, 987654321, 0, 0, 0, 0, 6, 0, 0, 0},
+		{1, 0, 0, -999.999, 42, 0, 0, 0, 3, 0, 1},
+		{0, 0, 0, 0, 0, 3, 3, 0, 0, 6, 0},
+	} {
+		f := report.fields[i]
+		if f.blank != tc.blank {
+			t.Errorf("#%d fail to count blank: actual=%d, expected=%d", i+1, f.blank, tc.blank)
+		}
+		if f.minimum != tc.minimum {
+			t.Errorf("#%d fail to calculate minimum value: actual=%d, expected=%d", i+1, f.minimum, tc.minimum)
+		}
+		if f.maximum != tc.maximum {
+			t.Errorf("#%d fail to calculate maximum value: actual=%d, expected=%d", i+1, f.maximum, tc.maximum)
+		}
+		if f.minimumF != tc.minimumF {
+			t.Errorf("#%d fail to calculate minimum float value: actual=%f, expected=%f", i+1, f.minimumF, tc.minimumF)
+		}
+		if f.maximumF != tc.maximumF {
+			t.Errorf("#%d fail to calculate maximum float value: actual=%f, expected=%f", i+1, f.maximumF, tc.maximumF)
+		}
+		if f.trueCount != tc.trueCount {
+			t.Errorf("#%d fail to count boolean true: actual=%d, expected=%d", i+1, f.trueCount, tc.trueCount)
+		}
+		if f.falseCount != tc.falseCount {
+			t.Errorf("#%d fail to count boolean false: actual=%d, expected=%d", i+1, f.falseCount, tc.falseCount)
+		}
+		if f.intType != tc.intType {
+			t.Errorf("#%d fail to count integer type: actual=%d, expected=%d", i+1, f.intType, tc.intType)
+		}
+		if f.floatType != tc.floatType {
+			t.Errorf("#%d fail to count float type: actual=%d, expected=%d", i+1, f.floatType, tc.floatType)
+		}
+		if f.boolType != tc.boolType {
+			t.Errorf("#%d fail to count bool type: actual=%d, expected=%d", i+1, f.boolType, tc.boolType)
+		}
+		if f.fullWidth != tc.fullWidth {
+			t.Errorf("#%d fail to count full width: actual=%d, expected=%d", i+1, f.fullWidth, tc.fullWidth)
+		}
 	}
 }
 
