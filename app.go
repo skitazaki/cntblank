@@ -15,6 +15,7 @@ import (
 	"golang.org/x/text/transform"
 
 	log "github.com/Sirupsen/logrus"
+	valid "github.com/asaskevich/govalidator"
 )
 
 // Application object.
@@ -48,6 +49,7 @@ type ReportField struct {
 	intType    int
 	floatType  int
 	boolType   int
+	fullWidth  int
 }
 
 func (r *ReportField) header() []string {
@@ -164,6 +166,9 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 		}
 		if f.maxLength < stringLength {
 			f.maxLength = stringLength
+		}
+		if valid.IsFullWidth(val) {
+			f.fullWidth++
 		}
 		if valInt, err := strconv.Atoi(val); err == nil {
 			if f.intType == 0 {

@@ -66,7 +66,7 @@ func TestReportTypeDetection(t *testing.T) {
 	report.parseRecord([]string{"0", "42.0", "True"})
 	report.parseRecord([]string{"123", "", "F"})
 	report.parseRecord([]string{"-456", "-999.999", "false"})
-	report.parseRecord([]string{"987654321", "-101.0", "False"})
+	report.parseRecord([]string{"987654321", "-101.0あ", "False"})
 	if report.records == 6 {
 		t.Log("ok to parse six records.")
 	} else {
@@ -141,10 +141,8 @@ func TestReportTypeDetection(t *testing.T) {
 	} else {
 		t.Error(f)
 	}
-	if f.floatType == 4 {
-		t.Log("ok to count up float type.")
-	} else {
-		t.Error(f)
+	if f.floatType != 3 {
+		t.Errorf("fail to count float type: actual=%d, expected=%d", f.floatType, 3)
 	}
 	if f.boolType == 0 {
 		t.Log("ok to stay zero for bool type.")
@@ -180,6 +178,9 @@ func TestReportTypeDetection(t *testing.T) {
 		t.Log("ok not to calculate boolean value for false.")
 	} else {
 		t.Error(f)
+	}
+	if f.fullWidth != 1 {
+		t.Errorf("fail to count full width: actual=%d, expected=%d", f.fullWidth, 1)
 	}
 
 	f = report.fields[2]
