@@ -82,6 +82,12 @@ Args:
 | #True | Count of cells which should be treated as boolean true. |
 | #False | Count of cells which should be treated as boolean false. |
 
+Note that "1" is interpreted as boolean true and "0" is also interpreted as boolean false.
+Therefore, if a column is integer field, "#True" represents the count of "1" and "#False"
+represents the count of "0" in the field.
+Since some buggy data files sometimes include "0" as null accidentally, this feature may
+help you to count up pseudo blank cells.
+
 
 ## Development setup
 
