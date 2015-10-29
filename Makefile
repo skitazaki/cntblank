@@ -3,7 +3,7 @@ all: clean build test dist
 setup:
 	go get -d
 
-build: app.go main.go
+build: main.go app.go report.go dtparse.go
 	go fmt
 	go vet
 	go build -o cntblank
