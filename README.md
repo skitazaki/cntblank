@@ -11,8 +11,8 @@ INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors de
 # File          testdata/prefecture_jp.tsv      prefecture_jp.tsv
 # Field         2                               (has header)
 # Record        47
-seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   Minimum Maximum MinimumF        MaximumF        #True   #False
-1       都道府県コード  0       0.0000  2       2       47                      1       47
+seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   #Time    Minimum Maximum #True   #False
+1       都道府県コード  0       0.0000  2       2       47       47               1       47
 2       都道府県        0       0.0000  3       4
 ```
 
@@ -37,9 +37,10 @@ seq            Name           #Blank         %Blank         MinLength      MaxLe
 - Default input/output encoding is "UTF-8" and it also accepts only "sjis" value on the option.
 - Default input/output delimiter is TAB.
 - Meta-information is file path, field length, and number of records.
+- If no file path arguments are given, process standard input.
 
 ```text
-usage: cntblank [<flags>] [<tabfile>]
+usage: cntblank [<flags>] [<tabfile>...]
 
 Count blank cells on text-based tabular data.
 
@@ -58,9 +59,10 @@ Flags:
   --strict             Check column size strictly.
   --output-meta        Put meta information.
   -o, --output=OUTPUT  Output file.
+  --version            Show application version.
 
 Args:
-  [<tabfile>]  Tabular data file.
+  [<tabfile>]  Tabular data files.
 ```
 
 ### Output fields
@@ -76,15 +78,17 @@ Args:
 | #Int | Count of integer type cells. This may be blank. |
 | #Float | Count of float type cells. This may be blank. |
 | #Bool | Count of bool type cells. This may be blank. |
-| Minimum | Minimum integer value. |
-| Maximum | Maximum integer value. |
-| MinimumF | Minimum float value. |
-| MaximumF | Maximum float value. |
+| #Time | Count of time type cells. This may be blank. |
+| Minimum | Minimum value after guessing data type. |
+| Maximum | Maximum value after guessing data type. |
 | #True | Count of cells which should be treated as boolean true. |
 | #False | Count of cells which should be treated as boolean false. |
 
-Since type detecton is done order by `int`, `float`, and `bool`, there is no relation with minimum/maximum integer value and minimum/maximum float value.
-And, "1" or "0" is not treated as boolean because it is treated as integer in the first detection logic.
+Note that "1" is interpreted as boolean true and "0" is also interpreted as boolean false.
+Therefore, if a column is integer field, "#True" represents the count of "1" and "#False"
+represents the count of "0" in the field.
+Since some buggy data files sometimes include "0" as null accidentally, this feature may
+help you to count up pseudo blank cells.
 
 
 ## Development setup
@@ -95,6 +99,13 @@ And, "1" or "0" is not treated as boolean because it is treated as integer in th
 
 - github.com/Sirupsen/logrus
 - gopkg.in/alecthomas/kingpin.v2
+- github.com/asaskevich/govalidator
+
+Setup using `Makefile` calling `go get -d`:
+
+```bash
+$ make setup
+```
 
 ### Build
 
@@ -103,4 +114,4 @@ $ go build -o cntblank
 ```
 
 `build.sh` is a build script to generate binary files for multiple architecture
-using docker container.
+using docker container. And, `make` wraps whole processes to generate binaries.

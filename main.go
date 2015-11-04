@@ -20,7 +20,7 @@ var (
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
-	cliTabularFile  = cli.Arg("tabfile", "Tabular data file.").ExistingFile()
+	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
 )
 
 func main() {
@@ -55,5 +55,11 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	app.run(*cliTabularFile, *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+	if len(*cliTabularFiles) > 0 {
+		for _, file := range *cliTabularFiles {
+			app.run(file, *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+		}
+	} else {
+		app.run("", *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+	}
 }
