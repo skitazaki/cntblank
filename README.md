@@ -37,9 +37,10 @@ seq            Name           #Blank         %Blank         MinLength      MaxLe
 - Default input/output encoding is "UTF-8" and it also accepts only "sjis" value on the option.
 - Default input/output delimiter is TAB.
 - Meta-information is file path, field length, and number of records.
+- If no file path arguments are given, process standard input.
 
 ```text
-usage: cntblank [<flags>] [<tabfile>]
+usage: cntblank [<flags>] [<tabfile>...]
 
 Count blank cells on text-based tabular data.
 
@@ -58,9 +59,10 @@ Flags:
   --strict             Check column size strictly.
   --output-meta        Put meta information.
   -o, --output=OUTPUT  Output file.
+  --version            Show application version.
 
 Args:
-  [<tabfile>]  Tabular data file.
+  [<tabfile>]  Tabular data files.
 ```
 
 ### Output fields
