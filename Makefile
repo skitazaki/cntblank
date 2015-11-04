@@ -1,4 +1,4 @@
-all: clean build test dist
+all: clean build test version dist
 
 setup:
 	go get -d
@@ -10,6 +10,10 @@ build: main.go app.go report.go dtparse.go
 
 test: app_test.go
 	go test
+
+version: build
+	./cntblank --version
+	./cntblank --help || :
 
 dist:
 	./build.sh
