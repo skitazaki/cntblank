@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank)
+
 # Count Blank Cells
 
 Count blank cells on text-based tabular data.
