@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
@@ -141,35 +140,11 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bo
 }
 
 func (a *Application) putReport(report Report) {
-	if a.putMeta {
-		preamble := make([]string, 3)
-		if len(report.path) > 0 {
-			preamble[0] = "# File"
-			preamble[1] = report.path
-			preamble[2] = filepath.Base(report.path)
-			a.writer.Write(preamble)
-		}
-		preamble[0] = "# Field"
-		preamble[1] = fmt.Sprint(len(report.fields))
-		if report.hasHeader {
-			preamble[2] = "(has header)"
-		} else {
-			preamble[2] = ""
-		}
-		a.writer.Write(preamble)
-		preamble[0] = "# Record"
-		preamble[1] = fmt.Sprint(report.records)
-		preamble[2] = ""
-		a.writer.Write(preamble)
+	writer := NewReportWriter(a.writer, a.putMeta)
+	err := writer.Write(report)
+	if err != nil {
+		log.Error(err)
 	}
-	// Put header line.
-	a.writer.Write(new(ReportField).header())
-	// Put each field report.
-	for i := 0; i < len(report.fields); i++ {
-		r := report.fields[i]
-		a.writer.Write(r.format(report.records))
-	}
-	a.writer.Flush()
 }
 
 // Create `Application` object to set some options.

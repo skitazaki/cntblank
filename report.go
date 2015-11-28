@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -9,6 +11,24 @@ import (
 
 	valid "github.com/asaskevich/govalidator"
 )
+
+// ReportOutputFields is a header line to write.
+var ReportOutputFields = []string{
+	"seq",
+	"Name",
+	"#Blank",
+	"%Blank",
+	"MinLength",
+	"MaxLength",
+	"#Int",
+	"#Float",
+	"#Bool",
+	"#Time",
+	"Minimum",
+	"Maximum",
+	"#True",
+	"#False",
+}
 
 // Calculate report.
 type Report struct {
@@ -40,24 +60,22 @@ type ReportField struct {
 	fullWidth  int
 }
 
-func (r *ReportField) header() []string {
-	return []string{
-		"seq",
-		"Name",
-		"#Blank",
-		"%Blank",
-		"MinLength",
-		"MaxLength",
-		"#Int",
-		"#Float",
-		"#Bool",
-		"#Time",
-		"Minimum",
-		"Maximum",
-		"#True",
-		"#False",
+// ReportWriter is a writer object to wrap csv writer.
+type ReportWriter struct {
+	showMetadata bool
+	showHeader   bool
+	w            *csv.Writer
+}
+
+// NewReportWriter returns a new ReportWriter that writes to w.
+func NewReportWriter(w *csv.Writer, showMetadata bool) *ReportWriter {
+	return &ReportWriter{
+		showMetadata: showMetadata,
+		showHeader:   true,
+		w:            w,
 	}
 }
+
 func (r *ReportField) format(total int) []string {
 	s := make([]string, 14)
 	s[0] = fmt.Sprint(r.seq)
@@ -99,7 +117,7 @@ func (r *ReportField) format(total int) []string {
 	if r.timeType > r.floatType {
 		s[10] = r.minimumT.Format("2006-01-02 15:04:05")
 		s[11] = r.maximumT.Format("2006-01-02 15:04:05")
-	} else if r.floatType > 0 {
+	} else if r.floatType > 0 && r.intType > 0 {
 		if float64(r.minimum) <= r.minimumF {
 			s[10] = fmt.Sprint(r.minimum)
 		} else {
@@ -110,6 +128,12 @@ func (r *ReportField) format(total int) []string {
 		} else {
 			s[11] = fmt.Sprintf("%.4f", r.maximumF)
 		}
+	} else if r.floatType > 0 {
+		s[10] = fmt.Sprintf("%.4f", r.minimumF)
+		s[11] = fmt.Sprintf("%.4f", r.maximumF)
+	} else if r.intType > 0 {
+		s[10] = fmt.Sprint(r.minimum)
+		s[11] = fmt.Sprint(r.maximum)
 	} else {
 		s[10] = ""
 		s[11] = ""
@@ -219,4 +243,39 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 		}
 	}
 	return nullCount
+}
+
+func (w *ReportWriter) Write(report Report) error {
+	if w.showMetadata {
+		preamble := make([]string, 3)
+		if len(report.path) > 0 {
+			preamble[0] = "# File"
+			preamble[1] = report.path
+			preamble[2] = filepath.Base(report.path)
+			w.w.Write(preamble)
+		}
+		preamble[0] = "# Field"
+		preamble[1] = fmt.Sprint(len(report.fields))
+		if report.hasHeader {
+			preamble[2] = "(has header)"
+		} else {
+			preamble[2] = ""
+		}
+		w.w.Write(preamble)
+		preamble[0] = "# Record"
+		preamble[1] = fmt.Sprint(report.records)
+		preamble[2] = ""
+		w.w.Write(preamble)
+	}
+	// Put header line.
+	if w.showHeader {
+		w.w.Write(ReportOutputFields)
+	}
+	// Put each field report.
+	for i := 0; i < len(report.fields); i++ {
+		r := report.fields[i]
+		w.w.Write(r.format(report.records))
+	}
+	w.w.Flush()
+	return w.w.Error()
 }

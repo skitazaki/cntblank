@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/csv"
 	"fmt"
 	"testing"
 	"time"
@@ -156,30 +158,110 @@ func TestReportTypeDetection(t *testing.T) {
 	}
 }
 
-func TestReportFieldFormat(t *testing.T) {
-	field := new(ReportField)
-	field.seq = 1
-	field.name = "Column001"
-	field.blank = 100
-	field.timeType = 2
-	field.minimumT, _ = time.Parse("2006-01-02", "2015-10-29")
-	field.maximumT, _ = time.Parse("2006-01-02", "2015-11-05")
+var formatTests = []struct {
+	Sequence int
+	Name     string
+	Blank    int
+	Length   [2]int     // Order by min, max
+	Types    [4]int     // Order by int, float, bool, time
+	Integer  [2]int     // Order by min, max
+	Float    [2]float64 // Order by min, max
+	Time     [2]string  // Order by min, max
+	Expected []string
+}{
+	{
+		Sequence: 1, Name: "Column001", Blank: 98, Length: [2]int{10, 10},
+		Types: [4]int{0, 0, 0, 2},
+		Time:  [2]string{"2015-10-29", "2015-11-05"},
+		Expected: []string{
+			"1", "Column001", // seq, Name
+			"98", "0.9800", // #Blank, %Blank
+			"10", "10", // MinLength, MaxLength
+			"", "", "", "2", // #Int, #Float, #Bool, #Time
+			"2015-10-29 00:00:00", "2015-11-05 00:00:00", // Minimum, Maximum
+			"", "", // #True, #False
+		},
+	},
+	{
+		Sequence: 2, Name: "Column002", Blank: 50, Length: [2]int{3, 12},
+		Types: [4]int{0, 50, 0, 0},
+		Float: [2]float64{1.1, 2.2},
+		Expected: []string{
+			"2", "Column002", // seq, Name
+			"50", "0.5000", // #Blank, %Blank
+			"3", "12", // MinLength, MaxLength
+			"", "50", "", "", // #Int, #Float, #Bool, #Time
+			"1.1000", "2.2000", // Minimum, Maximum
+			"", "", // #True, #False
+		},
+	},
+}
 
-	expected := []string{
-		"1", "Column001", // seq, Name
-		"100", "1.0000", // #Blank, %Blank
-		"", "", // MinLength, MaxLength
-		"", "", "", "2", // #Int, #Float, #Bool, #Time
-		"2015-10-29 00:00:00", "2015-11-05 00:00:00", // Minimum, Maximum
-		"", "", // #True, #False
-	}
-	f := field.format(100)
-	if len(f) != len(expected) {
-		t.Errorf("field formatter returned invalid length: actual=%d, expected=%d", len(f), len(expected))
-	}
-	for i, v := range expected {
-		if f[i] != v {
-			t.Errorf("#%d field is invalid string: actual=%s, expected=%s", i, f[i], v)
+func TestReportFieldFormat(t *testing.T) {
+	for n, tt := range formatTests {
+		field := new(ReportField)
+		field.seq = tt.Sequence
+		field.name = tt.Name
+		field.blank = tt.Blank
+		field.minLength = tt.Length[0]
+		field.maxLength = tt.Length[1]
+		field.intType = tt.Types[0]
+		field.floatType = tt.Types[1]
+		field.boolType = tt.Types[2]
+		field.timeType = tt.Types[3]
+		if len(tt.Integer) > 0 {
+			field.minimum = tt.Integer[0]
+			field.maximum = tt.Integer[1]
 		}
+		if len(tt.Float) > 0 {
+			field.minimumF = tt.Float[0]
+			field.maximumF = tt.Float[1]
+		}
+		if len(tt.Time) > 0 {
+			field.minimumT, _ = time.Parse("2006-01-02", tt.Time[0])
+			field.maximumT, _ = time.Parse("2006-01-02", tt.Time[1])
+		}
+		expected := tt.Expected
+		f := field.format(100)
+		if len(f) != len(expected) {
+			t.Errorf("[#%d] field formatter returned invalid length: actual=%d, expected=%d", n, len(f), len(expected))
+		}
+		for i, v := range expected {
+			if f[i] != v {
+				t.Errorf("[#%d] #%d field is invalid string: actual=%s, expected=%s", n, i, f[i], v)
+			}
+		}
+	}
+}
+
+func TestReportWriterWithMetadata(t *testing.T) {
+	buffer := &bytes.Buffer{}
+	w := NewReportWriter(csv.NewWriter(buffer), true)
+	r := new(Report)
+	err := w.Write(*r)
+	if err != nil {
+		t.Errorf("Unexpected error: %s\n", err)
+	}
+	out := buffer.String()
+	expected := "# Field,0,\n"
+	expected += "# Record,0,\n"
+	expected += "seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maximum,#True,#False\n"
+	if out != expected {
+		t.Errorf("out=%q want %q", out, expected)
+	}
+}
+
+func TestReportWriterWithoutMetadata(t *testing.T) {
+	buffer := &bytes.Buffer{}
+	w := NewReportWriter(csv.NewWriter(buffer), false)
+	r := new(Report)
+	err := w.Write(*r)
+	if err != nil {
+		t.Errorf("Unexpected error: %s\n", err)
+	}
+	out := buffer.String()
+	expected := "seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maximum,#True,#False\n"
+	if out != expected {
+		t.Errorf("out=%q want %q", out, expected)
 	}
 }
