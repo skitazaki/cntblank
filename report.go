@@ -117,7 +117,7 @@ func (r *ReportField) format(total int) []string {
 	if r.timeType > r.floatType {
 		s[10] = r.minimumT.Format("2006-01-02 15:04:05")
 		s[11] = r.maximumT.Format("2006-01-02 15:04:05")
-	} else if r.floatType > 0 {
+	} else if r.floatType > 0 && r.intType > 0 {
 		if float64(r.minimum) <= r.minimumF {
 			s[10] = fmt.Sprint(r.minimum)
 		} else {
@@ -128,6 +128,12 @@ func (r *ReportField) format(total int) []string {
 		} else {
 			s[11] = fmt.Sprintf("%.4f", r.maximumF)
 		}
+	} else if r.floatType > 0 {
+		s[10] = fmt.Sprintf("%.4f", r.minimumF)
+		s[11] = fmt.Sprintf("%.4f", r.maximumF)
+	} else if r.intType > 0 {
+		s[10] = fmt.Sprint(r.minimum)
+		s[11] = fmt.Sprint(r.maximum)
 	} else {
 		s[10] = ""
 		s[11] = ""
