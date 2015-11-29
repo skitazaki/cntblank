@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -33,38 +31,17 @@ func (a *Application) run(path string, encoding string, delimiter rune,
 	if strict {
 		dialect.FieldsPerRecord = 0
 	}
-	var buffer *bufio.Reader
-	if len(path) > 0 {
-		fp, err := os.Open(path)
-		// TODO: Check `fp` is file or directory.
-		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-		defer fp.Close()
-		buffer = bufio.NewReader(fp)
-		a.logfields = log.Fields{"path": path}
-	} else {
-		buffer = bufio.NewReader(os.Stdin)
-		a.logfields = log.Fields{}
-	}
 
-	logger := log.WithFields(a.logfields)
-
-	var reader *csv.Reader
-	if dialect.Encoding == "sjis" {
-		logger.Info("use ShiftJIS decoder for input.")
-		decoder := japanese.ShiftJIS.NewDecoder()
-		r := transform.NewReader(buffer, decoder)
-		reader = csv.NewReader(r)
-	} else {
-		reader = csv.NewReader(buffer)
+	reader, err := OpenFile(path, dialect)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
+	defer reader.Close()
 
 	report, err := a.cntblank(reader, dialect)
 	if err != nil {
-		logger.Error(err)
+		log.Error(err)
 		return err
 	}
 	report.path = path
@@ -73,21 +50,15 @@ func (a *Application) run(path string, encoding string, delimiter rune,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, dialect *FileDialect) (report *Report, err error) {
+func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	reader.Comma = dialect.Comma
-	reader.Comment = dialect.Comment
-	reader.FieldsPerRecord = dialect.FieldsPerRecord
-	lines := 0
 	report = new(Report)
 	if dialect.HasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
-		lines++
 		if err == io.EOF {
 			return nil, fmt.Errorf("reader is empty")
 		} else if err != nil {
-			logger.Error(err)
 			return nil, err
 		}
 		err = report.header(record)
@@ -99,32 +70,24 @@ func (a *Application) cntblank(reader *csv.Reader, dialect *FileDialect) (report
 	} else {
 		logger.Info("start parsing without header row")
 	}
-	errCount := 0
 	for {
 		record, err := reader.Read()
-		lines++
 		if err == io.EOF {
-			lines--
 			break
 		} else if err != nil {
-			logger.Error(err, ", #line", lines)
-			errCount++
-			if errCount > 100 {
-				return nil, fmt.Errorf("too many error lines")
+			if reader.err > 100 {
+				break
 			}
 			continue
 		}
 		nullCount := report.parseRecord(record)
 		if nullCount > 0 {
 			logger.Debugf("line #%d has %d fields with %d NULL(s).",
-				lines, len(record), nullCount)
-		}
-		if lines%1000000 == 0 {
-			logger.Info("==> Processed ", lines, " lines <==")
+				reader.line, len(record), nullCount)
 		}
 	}
-	logger.Infof("finish parsing %d lines to get %d records with %d columns. %d errors detected.",
-		lines, report.records, len(report.fields), errCount)
+	logger.Infof("get %d records with %d columns",
+		report.records, len(report.fields))
 	return report, nil
 }
 

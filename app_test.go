@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/csv"
 	"testing"
 )
 
@@ -14,12 +13,12 @@ C,D
 `)
 	buffer := new(bytes.Buffer)
 	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
 	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
@@ -44,12 +43,12 @@ PI,3.1415926535897932384
 `)
 	buffer := new(bytes.Buffer)
 	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
 	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
@@ -109,12 +108,12 @@ PI ,3.1415926535897932384 ,"blank after value "
 `)
 	buffer := new(bytes.Buffer)
 	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
 	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
