@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -22,7 +21,7 @@ type Application struct {
 }
 
 // Run application main logic.
-func (a *Application) run(path string, encoding string, delimiter string,
+func (a *Application) run(path string, encoding string, delimiter rune,
 	noHeader bool, strict bool) error {
 	var buffer *bufio.Reader
 	if len(path) > 0 {
@@ -69,20 +68,9 @@ func (a *Application) run(path string, encoding string, delimiter string,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *csv.Reader, delimiter rune, noHeader bool, strict bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	if len(delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(delimiter)
-		if err == utf8.RuneError {
-			logger.Warn(err)
-			logger.Info("input delimiter option is invalid, but continue running.")
-			reader.Comma = '\t'
-		} else {
-			reader.Comma = comma
-		}
-	} else {
-		reader.Comma = '\t'
-	}
+	reader.Comma = delimiter
 	reader.Comment = '#'
 	if strict {
 		reader.FieldsPerRecord = 0
@@ -148,7 +136,7 @@ func (a *Application) putReport(report Report) {
 }
 
 // Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding string, delimiter string, meta bool) (a *Application, err error) {
+func newApplication(writer io.Writer, encoding string, delimiter rune, meta bool) (a *Application, err error) {
 	a = new(Application)
 	if len(encoding) > 0 {
 		if encoding == "sjis" {
@@ -160,18 +148,7 @@ func newApplication(writer io.Writer, encoding string, delimiter string, meta bo
 		}
 	}
 	a.writer = csv.NewWriter(writer)
-	if len(delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(delimiter)
-		if err == utf8.RuneError {
-			log.Warn(err)
-			log.Info("output delimiter option is invalid, but continue running.")
-			a.writer.Comma = '\t'
-		} else {
-			a.writer.Comma = comma
-		}
-	} else {
-		a.writer.Comma = '\t'
-	}
+	a.writer.Comma = delimiter
 	a.putMeta = meta
 	return a, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -49,17 +50,36 @@ func main() {
 	} else {
 		output = os.Stdout
 	}
+	// Convert delimiter type from string to rune.
+	inComma := '\t'
+	outComma := '\t'
+	if len(*cliInDelimiter) > 0 {
+		comma, size := utf8.DecodeRuneInString(*cliInDelimiter)
+		if size == utf8.RuneError {
+			log.Warn("input delimiter option is invalid, but continue running.")
+		} else {
+			inComma = comma
+		}
+	}
+	if len(*cliOutDelimiter) > 0 {
+		comma, size := utf8.DecodeRuneInString(*cliOutDelimiter)
+		if size == utf8.RuneError {
+			log.Warn("output delimiter option is invalid, but continue running.")
+		} else {
+			outComma = comma
+		}
+	}
 	// Run main application logic.
-	app, err := newApplication(output, *cliOutEncoding, *cliOutDelimiter, *cliOutMeta)
+	app, err := newApplication(output, *cliOutEncoding, outComma, *cliOutMeta)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	if len(*cliTabularFiles) > 0 {
 		for _, file := range *cliTabularFiles {
-			app.run(file, *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+			app.run(file, *cliInEncoding, inComma, *cliNoHeader, *cliStrict)
 		}
 	} else {
-		app.run("", *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+		app.run("", *cliInEncoding, inComma, *cliNoHeader, *cliStrict)
 	}
 }
