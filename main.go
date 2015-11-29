@@ -69,17 +69,34 @@ func main() {
 			outComma = comma
 		}
 	}
+	// Check encoding options.
+	inEncoding := "utf8"
+	outEncoding := "utf8"
+	if len(*cliInEncoding) > 0 {
+		if *cliInEncoding == "sjis" {
+			inEncoding = *cliInEncoding
+		} else {
+			log.Warn("unknown input encoding: ", *cliInEncoding)
+		}
+	}
+	if len(*cliOutEncoding) > 0 {
+		if *cliOutEncoding == "sjis" {
+			outEncoding = *cliOutEncoding
+		} else {
+			log.Warn("unknown output encoding: ", *cliOutEncoding)
+		}
+	}
 	// Run main application logic.
-	app, err := newApplication(output, *cliOutEncoding, outComma, *cliOutMeta)
+	app, err := newApplication(output, outEncoding, outComma, *cliOutMeta)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	if len(*cliTabularFiles) > 0 {
 		for _, file := range *cliTabularFiles {
-			app.run(file, *cliInEncoding, inComma, *cliNoHeader, *cliStrict)
+			app.run(file, inEncoding, inComma, *cliNoHeader, *cliStrict)
 		}
 	} else {
-		app.run("", *cliInEncoding, inComma, *cliNoHeader, *cliStrict)
+		app.run("", inEncoding, inComma, *cliNoHeader, *cliStrict)
 	}
 }

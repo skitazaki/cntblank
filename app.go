@@ -23,6 +23,16 @@ type Application struct {
 // Run application main logic.
 func (a *Application) run(path string, encoding string, delimiter rune,
 	noHeader bool, strict bool) error {
+	dialect := &FileDialect{
+		Encoding:        encoding,
+		Comma:           delimiter,
+		Comment:         '#',
+		FieldsPerRecord: -1,
+		HasHeader:       !noHeader,
+	}
+	if strict {
+		dialect.FieldsPerRecord = 0
+	}
 	var buffer *bufio.Reader
 	if len(path) > 0 {
 		fp, err := os.Open(path)
@@ -43,21 +53,16 @@ func (a *Application) run(path string, encoding string, delimiter rune,
 	logger := log.WithFields(a.logfields)
 
 	var reader *csv.Reader
-	if len(encoding) > 0 {
-		if encoding == "sjis" {
-			logger.Info("use ShiftJIS decoder for input.")
-			decoder := japanese.ShiftJIS.NewDecoder()
-			r := transform.NewReader(buffer, decoder)
-			reader = csv.NewReader(r)
-		} else {
-			logger.Warn("unknown encoding: ", encoding)
-			reader = csv.NewReader(buffer)
-		}
+	if dialect.Encoding == "sjis" {
+		logger.Info("use ShiftJIS decoder for input.")
+		decoder := japanese.ShiftJIS.NewDecoder()
+		r := transform.NewReader(buffer, decoder)
+		reader = csv.NewReader(r)
 	} else {
 		reader = csv.NewReader(buffer)
 	}
 
-	report, err := a.cntblank(reader, delimiter, noHeader, strict)
+	report, err := a.cntblank(reader, dialect)
 	if err != nil {
 		logger.Error(err)
 		return err
@@ -68,20 +73,14 @@ func (a *Application) run(path string, encoding string, delimiter rune,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter rune, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *csv.Reader, dialect *FileDialect) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	reader.Comma = delimiter
-	reader.Comment = '#'
-	if strict {
-		reader.FieldsPerRecord = 0
-	} else {
-		reader.FieldsPerRecord = -1
-	}
+	reader.Comma = dialect.Comma
+	reader.Comment = dialect.Comment
+	reader.FieldsPerRecord = dialect.FieldsPerRecord
 	lines := 0
 	report = new(Report)
-	if noHeader {
-		logger.Info("start parsing without header row")
-	} else {
+	if dialect.HasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
 		lines++
@@ -97,6 +96,8 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter rune, noHeader bool
 			return nil, err
 		}
 		logger.Info("start parsing with ", len(report.fields), " columns.")
+	} else {
+		logger.Info("start parsing without header row")
 	}
 	errCount := 0
 	for {
@@ -138,14 +139,10 @@ func (a *Application) putReport(report Report) {
 // Create `Application` object to set some options.
 func newApplication(writer io.Writer, encoding string, delimiter rune, meta bool) (a *Application, err error) {
 	a = new(Application)
-	if len(encoding) > 0 {
-		if encoding == "sjis" {
-			log.Info("use ShiftJIS encoder for output.")
-			encoder := japanese.ShiftJIS.NewEncoder()
-			writer = transform.NewWriter(writer, encoder)
-		} else {
-			log.Warn("unknown encoding: ", encoding)
-		}
+	if encoding == "sjis" {
+		log.Info("use ShiftJIS encoder for output.")
+		encoder := japanese.ShiftJIS.NewEncoder()
+		writer = transform.NewWriter(writer, encoder)
 	}
 	a.writer = csv.NewWriter(writer)
 	a.writer.Comma = delimiter

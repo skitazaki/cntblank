@@ -16,7 +16,11 @@ C,D
 	w := bufio.NewWriter(buffer)
 	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
-	report, err := app.cntblank(reader, ',', false, false)
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,7 +46,11 @@ PI,3.1415926535897932384
 	w := bufio.NewWriter(buffer)
 	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
-	report, err := app.cntblank(reader, ',', false, false)
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}
@@ -103,7 +111,11 @@ PI ,3.1415926535897932384 ,"blank after value "
 	w := bufio.NewWriter(buffer)
 	reader := csv.NewReader(bytes.NewBuffer(input))
 	app, _ := newApplication(w, "", 0, false)
-	report, err := app.cntblank(reader, ',', false, false)
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}
