@@ -19,29 +19,15 @@ type Application struct {
 }
 
 // Run application main logic.
-func (a *Application) run(path string, encoding string, delimiter rune,
-	noHeader bool, strict bool) error {
-	dialect := &FileDialect{
-		Encoding:        encoding,
-		Comma:           delimiter,
-		Comment:         '#',
-		FieldsPerRecord: -1,
-		HasHeader:       !noHeader,
-	}
-	if strict {
-		dialect.FieldsPerRecord = 0
-	}
-
+func (a *Application) run(path string, dialect *FileDialect) error {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	defer reader.Close()
 
 	report, err := a.cntblank(reader, dialect)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	report.path = path
@@ -99,16 +85,16 @@ func (a *Application) putReport(report Report) {
 	}
 }
 
-// Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding string, delimiter rune, meta bool) (a *Application, err error) {
+// newApplication creates `Application` object to set some options.
+func newApplication(writer io.Writer, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	if encoding == "sjis" {
+	if dialect.Encoding == "sjis" {
 		log.Info("use ShiftJIS encoder for output.")
 		encoder := japanese.ShiftJIS.NewEncoder()
 		writer = transform.NewWriter(writer, encoder)
 	}
 	a.writer = csv.NewWriter(writer)
-	a.writer.Comma = delimiter
-	a.putMeta = meta
+	a.writer.Comma = dialect.Comma
+	a.putMeta = dialect.HasMetadata
 	return a, nil
 }

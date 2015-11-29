@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"testing"
 )
@@ -11,9 +10,8 @@ func TestApplication(t *testing.T) {
 A,B
 C,D
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	app, _ := newApplication(w, "", 0, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
@@ -41,9 +39,8 @@ ABC,0123456789
 PI,3.1415926535897932384
 ネイピア数,2.718281828459045235360287471352
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	app, _ := newApplication(w, "", 0, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
@@ -106,9 +103,8 @@ PI ,3.1415926535897932384 ,"blank after value "
  PI, 3.1415926535897932384, blank before value
  PI , 3.1415926535897932384 ," blank both of value "
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	app, _ := newApplication(w, "", 0, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,

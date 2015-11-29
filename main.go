@@ -50,7 +50,29 @@ func main() {
 	} else {
 		output = os.Stdout
 	}
-	// Convert delimiter type from string to rune.
+	inDialect, outDialect := populateIODialect()
+	// Run main application logic.
+	app, err := newApplication(output, outDialect)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	var files []string
+	if len(*cliTabularFiles) > 0 {
+		files = *cliTabularFiles
+	} else {
+		files = append(files, "")
+	}
+	for _, file := range files {
+		err = app.run(file, inDialect)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+func populateIODialect() (inDialect *FileDialect, outDialect *FileDialect) {
+	// Convert delimiter type from string to rune. default is TAB.
 	inComma := '\t'
 	outComma := '\t'
 	if len(*cliInDelimiter) > 0 {
@@ -69,7 +91,7 @@ func main() {
 			outComma = comma
 		}
 	}
-	// Check encoding options.
+	// Check encoding options. default is "utf8".
 	inEncoding := "utf8"
 	outEncoding := "utf8"
 	if len(*cliInEncoding) > 0 {
@@ -86,17 +108,20 @@ func main() {
 			log.Warn("unknown output encoding: ", *cliOutEncoding)
 		}
 	}
-	// Run main application logic.
-	app, err := newApplication(output, outEncoding, outComma, *cliOutMeta)
-	if err != nil {
-		log.Fatal(err)
-		return
+	inDialect = &FileDialect{
+		Encoding:        inEncoding,
+		Comma:           inComma,
+		Comment:         '#',
+		FieldsPerRecord: -1,
+		HasHeader:       !*cliNoHeader,
 	}
-	if len(*cliTabularFiles) > 0 {
-		for _, file := range *cliTabularFiles {
-			app.run(file, inEncoding, inComma, *cliNoHeader, *cliStrict)
-		}
-	} else {
-		app.run("", inEncoding, inComma, *cliNoHeader, *cliStrict)
+	if *cliStrict {
+		inDialect.FieldsPerRecord = 0
 	}
+	outDialect = &FileDialect{
+		Encoding:    outEncoding,
+		Comma:       outComma,
+		HasMetadata: *cliOutMeta,
+	}
+	return
 }

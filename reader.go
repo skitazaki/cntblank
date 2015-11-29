@@ -22,6 +22,7 @@ type FileDialect struct {
 	LazyQuotes       bool   // allow lazy quotes
 	TrimLeadingSpace bool   // trim leading space
 	HasHeader        bool   // CSV file has header line
+	HasMetadata      bool   // meta data before header line
 }
 
 // Reader is a generic file reader.
@@ -61,8 +62,10 @@ func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 		r = os.Stdin
 	}
 	reader, err = NewReader(r, dialect)
-	reader.Path = path
-	reader.logger = log.WithFields(log.Fields{"path": path})
+	if len(path) > 0 {
+		reader.Path = path
+		reader.logger = log.WithFields(log.Fields{"path": path})
+	}
 	if fp != nil {
 		reader.fp = fp
 	}
