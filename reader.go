@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/tealeg/xlsx"
 )
 
 // FileDialect is a configuration for "csv.Reader".
@@ -33,6 +35,7 @@ type Reader struct {
 	err       int
 	fp        *os.File
 	csvReader *csv.Reader
+	slices    [][][]string
 	logger    *log.Entry
 }
 
@@ -48,27 +51,32 @@ func NewReader(r io.Reader, dialect *FileDialect) (reader *Reader, err error) {
 
 // OpenFile returns a new Reader that reads from path using dialect.
 func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
-	var r io.Reader
-	var fp *os.File
-	if len(path) > 0 {
-		fp, err = os.Open(path)
+	if path == "" {
+		return NewReader(os.Stdin, dialect)
+	}
+	extension := filepath.Ext(path)
+	if extension == ".xlsx" {
+		slices, err := xlsx.FileToSlice(path)
+		if err != nil {
+			return nil, err
+		}
+		reader = &Reader{
+			columns: make(map[int]int),
+			logger:  log.WithFields(nil),
+			slices:  slices,
+		}
+	} else {
+		fp, err := os.Open(path)
 		// TODO: Check `fp` is file or directory.
 		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
 		if err != nil {
 			return nil, err
 		}
-		r = fp
-	} else {
-		r = os.Stdin
-	}
-	reader, err = NewReader(r, dialect)
-	if len(path) > 0 {
-		reader.Path = path
-		reader.logger = log.WithFields(log.Fields{"path": path})
-	}
-	if fp != nil {
+		reader, err = NewReader(fp, dialect)
 		reader.fp = fp
 	}
+	reader.Path = path
+	reader.logger = log.WithFields(log.Fields{"path": path})
 	return
 }
 
@@ -88,22 +96,32 @@ func (r *Reader) setupCsvReader(reader io.Reader, dialect *FileDialect) error {
 
 func (r *Reader) Read() (record []string, err error) {
 	// TODO: do not depend on `csv.Reader` interface.
-	record, err = r.csvReader.Read()
-	if err == io.EOF {
-		// Report the summary.
-		r.logger.Infof("finish parsing %d lines with %d errors", r.line, r.err)
-		for col, count := range r.columns {
-			r.logger.Infof("  column size %d has %d lines", col, count)
+	// This is a tentative implementation.
+	if r.csvReader != nil {
+		record, err = r.csvReader.Read()
+		if err == io.EOF {
+			// Report the summary.
+			r.logger.Infof("finish parsing %d lines with %d errors", r.line, r.err)
+			for col, count := range r.columns {
+				r.logger.Infof("  column size %d has %d lines", col, count)
+			}
+			return nil, err
+		} else if err != nil {
+			r.logger.Error(err, ", #line", r.line)
+			r.err++
+			if r.err > 100 {
+				r.logger.Error("too many error lines")
+				return nil, fmt.Errorf("too many error lines")
+			}
+			return nil, err
 		}
-		return nil, err
-	} else if err != nil {
-		r.logger.Error(err, ", #line", r.line)
-		r.err++
-		if r.err > 100 {
-			r.logger.Error("too many error lines")
-			return nil, fmt.Errorf("too many error lines")
+	} else if r.slices != nil {
+		// TODO: Set sheet number or name at runtime.
+		if len(r.slices[0]) <= r.line {
+			r.logger.Infof("finish parsing %d lines with %d errors", r.line, r.err)
+			return nil, io.EOF
 		}
-		return nil, err
+		record = r.slices[0][r.line]
 	}
 	r.line++
 	length := len(record)

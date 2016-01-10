@@ -150,12 +150,17 @@ func (r *ReportField) format(total int) []string {
 
 func (r *Report) header(record []string) error {
 	if len(record) == 0 {
-		return fmt.Errorf("header record has no elements.")
+		return fmt.Errorf("header record has no elements")
 	}
 	for i := 0; i < len(record); i++ {
 		f := new(ReportField)
 		f.seq = i + 1
-		f.name = strings.TrimSpace(record[i])
+		name := strings.TrimSpace(record[i])
+		if name != "" {
+			f.name = strings.Replace(name, "\n", "", -1)
+		} else {
+			f.name = fmt.Sprintf("Column%03d", i+1)
+		}
 		r.fields = append(r.fields, f)
 	}
 	r.hasHeader = true
