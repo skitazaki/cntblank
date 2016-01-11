@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -18,6 +19,7 @@ var (
 	cliOutDelimiter = cli.Flag("output-delimiter", "Output field delmiter.").String()
 	cliNoHeader     = cli.Flag("without-header", "Tabular does not have header line.").Bool()
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
+	cliSheet        = cli.Flag("sheet", "Excel sheet number which starts with 1.").Int()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
 	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
@@ -49,17 +51,79 @@ func main() {
 	} else {
 		output = os.Stdout
 	}
+	inDialect, outDialect := populateIODialect()
 	// Run main application logic.
-	app, err := newApplication(output, *cliOutEncoding, *cliOutDelimiter, *cliOutMeta)
+	app, err := newApplication(output, outDialect)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	var files []string
 	if len(*cliTabularFiles) > 0 {
-		for _, file := range *cliTabularFiles {
-			app.run(file, *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
-		}
+		files = *cliTabularFiles
 	} else {
-		app.run("", *cliInEncoding, *cliInDelimiter, *cliNoHeader, *cliStrict)
+		files = append(files, "")
 	}
+	for _, file := range files {
+		err = app.run(file, inDialect)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+func populateIODialect() (inDialect *FileDialect, outDialect *FileDialect) {
+	// Convert delimiter type from string to rune. default is TAB.
+	inComma := '\t'
+	outComma := '\t'
+	if len(*cliInDelimiter) > 0 {
+		comma, size := utf8.DecodeRuneInString(*cliInDelimiter)
+		if size == utf8.RuneError {
+			log.Warn("input delimiter option is invalid, but continue running.")
+		} else {
+			inComma = comma
+		}
+	}
+	if len(*cliOutDelimiter) > 0 {
+		comma, size := utf8.DecodeRuneInString(*cliOutDelimiter)
+		if size == utf8.RuneError {
+			log.Warn("output delimiter option is invalid, but continue running.")
+		} else {
+			outComma = comma
+		}
+	}
+	// Check encoding options. default is "utf8".
+	inEncoding := "utf8"
+	outEncoding := "utf8"
+	if len(*cliInEncoding) > 0 {
+		if *cliInEncoding == "sjis" {
+			inEncoding = *cliInEncoding
+		} else {
+			log.Warn("unknown input encoding: ", *cliInEncoding)
+		}
+	}
+	if len(*cliOutEncoding) > 0 {
+		if *cliOutEncoding == "sjis" {
+			outEncoding = *cliOutEncoding
+		} else {
+			log.Warn("unknown output encoding: ", *cliOutEncoding)
+		}
+	}
+	inDialect = &FileDialect{
+		Encoding:        inEncoding,
+		Comma:           inComma,
+		Comment:         '#',
+		FieldsPerRecord: -1,
+		HasHeader:       !*cliNoHeader,
+		SheetNumber:     *cliSheet,
+	}
+	if *cliStrict {
+		inDialect.FieldsPerRecord = 0
+	}
+	outDialect = &FileDialect{
+		Encoding:    outEncoding,
+		Comma:       outComma,
+		HasMetadata: *cliOutMeta,
+	}
+	return
 }

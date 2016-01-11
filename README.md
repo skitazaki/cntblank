@@ -32,6 +32,23 @@ seq            Name           #Blank         %Blank         MinLength      MaxLe
 6              file           0              0.0000         6              18
 ```
 
+Also accepts Excel file whose extension is ".xlsx".
+
+```bash
+$ ./cntblank --output-delimiter=, testdata/addrcode_jp.xlsx
+INFO[0000] start parsing with 7 columns.
+INFO[0000] finish parsing 1789 lines with 0 errors       path=testdata/addrcode_jp.xlsx
+INFO[0000] get 1788 records with 7 columns
+seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maximum,#True,#False
+1,団体コード,0,0.0000,6,6,1788,1788,,,10006,473821,,
+2,都道府県名（漢字）,0,0.0000,3,4,,,,,,,,
+3,市区町村名（漢字）,47,0.0263,2,7,,,,,,,,
+4,都道府県名（カナ）,0,0.0000,4,7,,,,,,,,
+5,市区町村名（カナ）,47,0.0263,2,13,,,,,,,,
+6,Column006,1788,1.0000,,,,,,,,,,
+7,Column007,1788,1.0000,,,,,,,,,,
+```
+
 ## Full Usage
 
 `--help` shows the details.
@@ -47,21 +64,22 @@ usage: cntblank [<flags>] [<tabfile>...]
 Count blank cells on text-based tabular data.
 
 Flags:
-  --help               Show help (also see --help-long and --help-man).
-  -v, --verbose        Set verbose mode on.
+      --help            Show context-sensitive help (also try --help-long and --help-man).
+  -v, --verbose         Set verbose mode on.
   -e, --input-encoding=INPUT-ENCODING
-                       Input encoding.
+                        Input encoding.
   -E, --output-encoding=OUTPUT-ENCODING
-                       Output encoding.
-  --input-delimiter=INPUT-DELIMITER
-                       Input field delimiter.
-  --output-delimiter=OUTPUT-DELIMITER
-                       Output field delmiter.
-  --without-header     Tabular does not have header line.
-  --strict             Check column size strictly.
-  --output-meta        Put meta information.
-  -o, --output=OUTPUT  Output file.
-  --version            Show application version.
+                        Output encoding.
+      --input-delimiter=INPUT-DELIMITER
+                        Input field delimiter.
+      --output-delimiter=OUTPUT-DELIMITER
+                        Output field delmiter.
+      --without-header  Tabular does not have header line.
+      --strict          Check column size strictly.
+      --sheet=SHEET     Excel sheet number which starts with 1.
+      --output-meta     Put meta information.
+  -o, --output=OUTPUT   Output file.
+      --version         Show application version.
 
 Args:
   [<tabfile>]  Tabular data files.
@@ -93,26 +111,33 @@ Since some buggy data files sometimes include "0" as null accidentally, this fea
 help you to count up pseudo blank cells.
 
 
-## Development setup
+## Development
 
 - Golang 1.5
 
-### Library Dependency
+### Setup and library dependency
 
-- github.com/Sirupsen/logrus
-- gopkg.in/alecthomas/kingpin.v2
-- github.com/asaskevich/govalidator
-
-Setup using `Makefile` calling `go get -d`:
+`Makefile` includes setup target calling `go get -d`:
 
 ```bash
 $ make setup
 ```
 
+Libraries:
+
+- github.com/Sirupsen/logrus
+- gopkg.in/alecthomas/kingpin.v2
+- github.com/asaskevich/govalidator
+- github.com/tealeg/xlsx
+
 ### Build
 
 ```bash
 $ go build -o cntblank
+
+OR
+
+$ make build
 ```
 
 `build.sh` is a build script to generate binary files for multiple architecture

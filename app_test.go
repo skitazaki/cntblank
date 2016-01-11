@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/csv"
 	"testing"
 )
 
@@ -12,11 +10,14 @@ func TestApplication(t *testing.T) {
 A,B
 C,D
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
-	app, _ := newApplication(w, "", "", false)
-	report, err := app.cntblank(reader, ",", false, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}
@@ -38,11 +39,14 @@ ABC,0123456789
 PI,3.1415926535897932384
 ネイピア数,2.718281828459045235360287471352
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
-	app, _ := newApplication(w, "", "", false)
-	report, err := app.cntblank(reader, ",", false, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}
@@ -99,11 +103,14 @@ PI ,3.1415926535897932384 ,"blank after value "
  PI, 3.1415926535897932384, blank before value
  PI , 3.1415926535897932384 ," blank both of value "
 `)
-	buffer := new(bytes.Buffer)
-	w := bufio.NewWriter(buffer)
-	reader := csv.NewReader(bytes.NewBuffer(input))
-	app, _ := newApplication(w, "", "", false)
-	report, err := app.cntblank(reader, ",", false, false)
+	buffer := &bytes.Buffer{}
+	app, _ := newApplication(buffer, &FileDialect{})
+	dialect := &FileDialect{
+		Comma:     ',',
+		HasHeader: true,
+	}
+	reader, err := NewReader(bytes.NewBuffer(input), dialect)
+	report, err := app.cntblank(reader, dialect)
 	if err != nil {
 		t.Error(err)
 	}

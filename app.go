@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
-	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -22,45 +19,15 @@ type Application struct {
 }
 
 // Run application main logic.
-func (a *Application) run(path string, encoding string, delimiter string,
-	noHeader bool, strict bool) error {
-	var buffer *bufio.Reader
-	if len(path) > 0 {
-		fp, err := os.Open(path)
-		// TODO: Check `fp` is file or directory.
-		// http://www.reddit.com/r/golang/comments/2fjwyk/isdir_in_go/
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-		defer fp.Close()
-		buffer = bufio.NewReader(fp)
-		a.logfields = log.Fields{"path": path}
-	} else {
-		buffer = bufio.NewReader(os.Stdin)
-		a.logfields = log.Fields{}
-	}
-
-	logger := log.WithFields(a.logfields)
-
-	var reader *csv.Reader
-	if len(encoding) > 0 {
-		if encoding == "sjis" {
-			logger.Info("use ShiftJIS decoder for input.")
-			decoder := japanese.ShiftJIS.NewDecoder()
-			r := transform.NewReader(buffer, decoder)
-			reader = csv.NewReader(r)
-		} else {
-			logger.Warn("unknown encoding: ", encoding)
-			reader = csv.NewReader(buffer)
-		}
-	} else {
-		reader = csv.NewReader(buffer)
-	}
-
-	report, err := a.cntblank(reader, delimiter, noHeader, strict)
+func (a *Application) run(path string, dialect *FileDialect) error {
+	reader, err := OpenFile(path, dialect)
 	if err != nil {
-		logger.Error(err)
+		return err
+	}
+	defer reader.Close()
+
+	report, err := a.cntblank(reader, dialect)
+	if err != nil {
 		return err
 	}
 	report.path = path
@@ -69,38 +36,15 @@ func (a *Application) run(path string, encoding string, delimiter string,
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bool, strict bool) (report *Report, err error) {
+func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
-	if len(delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(delimiter)
-		if err == utf8.RuneError {
-			logger.Warn(err)
-			logger.Info("input delimiter option is invalid, but continue running.")
-			reader.Comma = '\t'
-		} else {
-			reader.Comma = comma
-		}
-	} else {
-		reader.Comma = '\t'
-	}
-	reader.Comment = '#'
-	if strict {
-		reader.FieldsPerRecord = 0
-	} else {
-		reader.FieldsPerRecord = -1
-	}
-	lines := 0
 	report = new(Report)
-	if noHeader {
-		logger.Info("start parsing without header row")
-	} else {
+	if dialect.HasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
-		lines++
 		if err == io.EOF {
 			return nil, fmt.Errorf("reader is empty")
 		} else if err != nil {
-			logger.Error(err)
 			return nil, err
 		}
 		err = report.header(record)
@@ -109,33 +53,27 @@ func (a *Application) cntblank(reader *csv.Reader, delimiter string, noHeader bo
 			return nil, err
 		}
 		logger.Info("start parsing with ", len(report.fields), " columns.")
+	} else {
+		logger.Info("start parsing without header row")
 	}
-	errCount := 0
 	for {
 		record, err := reader.Read()
-		lines++
 		if err == io.EOF {
-			lines--
 			break
 		} else if err != nil {
-			logger.Error(err, ", #line", lines)
-			errCount++
-			if errCount > 100 {
-				return nil, fmt.Errorf("too many error lines")
+			if reader.err > 100 {
+				break
 			}
 			continue
 		}
 		nullCount := report.parseRecord(record)
 		if nullCount > 0 {
 			logger.Debugf("line #%d has %d fields with %d NULL(s).",
-				lines, len(record), nullCount)
-		}
-		if lines%1000000 == 0 {
-			logger.Info("==> Processed ", lines, " lines <==")
+				reader.line, len(record), nullCount)
 		}
 	}
-	logger.Infof("finish parsing %d lines to get %d records with %d columns. %d errors detected.",
-		lines, report.records, len(report.fields), errCount)
+	logger.Infof("get %d records with %d columns",
+		report.records, len(report.fields))
 	return report, nil
 }
 
@@ -147,31 +85,16 @@ func (a *Application) putReport(report Report) {
 	}
 }
 
-// Create `Application` object to set some options.
-func newApplication(writer io.Writer, encoding string, delimiter string, meta bool) (a *Application, err error) {
+// newApplication creates `Application` object to set some options.
+func newApplication(writer io.Writer, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	if len(encoding) > 0 {
-		if encoding == "sjis" {
-			log.Info("use ShiftJIS encoder for output.")
-			encoder := japanese.ShiftJIS.NewEncoder()
-			writer = transform.NewWriter(writer, encoder)
-		} else {
-			log.Warn("unknown encoding: ", encoding)
-		}
+	if dialect.Encoding == "sjis" {
+		log.Info("use ShiftJIS encoder for output.")
+		encoder := japanese.ShiftJIS.NewEncoder()
+		writer = transform.NewWriter(writer, encoder)
 	}
 	a.writer = csv.NewWriter(writer)
-	if len(delimiter) > 0 {
-		comma, err := utf8.DecodeRuneInString(delimiter)
-		if err == utf8.RuneError {
-			log.Warn(err)
-			log.Info("output delimiter option is invalid, but continue running.")
-			a.writer.Comma = '\t'
-		} else {
-			a.writer.Comma = comma
-		}
-	} else {
-		a.writer.Comma = '\t'
-	}
-	a.putMeta = meta
+	a.writer.Comma = dialect.Comma
+	a.putMeta = dialect.HasMetadata
 	return a, nil
 }
