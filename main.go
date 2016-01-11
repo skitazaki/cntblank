@@ -19,6 +19,7 @@ var (
 	cliOutDelimiter = cli.Flag("output-delimiter", "Output field delmiter.").String()
 	cliNoHeader     = cli.Flag("without-header", "Tabular does not have header line.").Bool()
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
+	cliSheet        = cli.Flag("sheet", "Excel sheet number which starts with 1.").Int()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
 	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
@@ -114,6 +115,7 @@ func populateIODialect() (inDialect *FileDialect, outDialect *FileDialect) {
 		Comment:         '#',
 		FieldsPerRecord: -1,
 		HasHeader:       !*cliNoHeader,
+		SheetNumber:     *cliSheet,
 	}
 	if *cliStrict {
 		inDialect.FieldsPerRecord = 0

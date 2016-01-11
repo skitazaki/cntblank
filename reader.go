@@ -25,6 +25,7 @@ type FileDialect struct {
 	TrimLeadingSpace bool   // trim leading space
 	HasHeader        bool   // CSV file has header line
 	HasMetadata      bool   // meta data before header line
+	SheetNumber      int    // sheet number in Excel file which starts with 1
 }
 
 // Reader is a generic file reader.
@@ -35,7 +36,7 @@ type Reader struct {
 	err       int
 	fp        *os.File
 	csvReader *csv.Reader
-	slices    [][][]string
+	slices    [][]string
 	logger    *log.Entry
 }
 
@@ -60,10 +61,20 @@ func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 		if err != nil {
 			return nil, err
 		}
+		var feeds [][]string
+		if dialect.SheetNumber == 0 {
+			feeds = slices[0]
+		} else {
+			if dialect.SheetNumber > len(slices) {
+				return nil, fmt.Errorf("%s has only %d sheets, given sheet number is %d",
+					path, len(slices), dialect.SheetNumber)
+			}
+			feeds = slices[dialect.SheetNumber-1]
+		}
 		reader = &Reader{
 			columns: make(map[int]int),
 			logger:  log.WithFields(nil),
-			slices:  slices,
+			slices:  feeds,
 		}
 	} else {
 		fp, err := os.Open(path)
@@ -116,12 +127,11 @@ func (r *Reader) Read() (record []string, err error) {
 			return nil, err
 		}
 	} else if r.slices != nil {
-		// TODO: Set sheet number or name at runtime.
-		if len(r.slices[0]) <= r.line {
+		if len(r.slices) <= r.line {
 			r.logger.Infof("finish parsing %d lines with %d errors", r.line, r.err)
 			return nil, io.EOF
 		}
-		record = r.slices[0][r.line]
+		record = r.slices[r.line]
 	}
 	r.line++
 	length := len(record)

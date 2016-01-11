@@ -6,7 +6,6 @@ import (
 
 func TestExcelReader(t *testing.T) {
 	dialect := &FileDialect{
-		Comma:     ',',
 		HasHeader: true,
 	}
 	reader, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
@@ -27,10 +26,50 @@ func TestExcelReader(t *testing.T) {
 		if len(r) != len(expected.record) {
 			t.Errorf("Line#%d should have %d elements, but %d exists", i+1, len(expected.record), len(r))
 		}
-        for j, v := range expected.record {
-            if r[j] != v {
-                t.Errorf("Line#%d Column#%d should be \"%s\", but \"%s\"", i+1, j+1, v, r[j])
-            }
-        }
+		for j, v := range expected.record {
+			if r[j] != v {
+				t.Errorf("Line#%d Column#%d should be \"%s\", but \"%s\"", i+1, j+1, v, r[j])
+			}
+		}
+	}
+}
+
+func TestExcelReaderSheetOption(t *testing.T) {
+	dialect := &FileDialect{
+		HasHeader:   false,
+		SheetNumber: 2,
+	}
+	reader, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	for i, expected := range []struct {
+		record []string
+	}{
+		{[]string{"011002", "札幌市", "さっぽろし", "", ""}},
+		{[]string{"011011", "札幌市中央区", "さっぽろしちゅうおうく", "", ""}},
+	} {
+		r, err := reader.Read()
+		if err != nil {
+			t.Fatalf("Line#%d: %v", i+1, err)
+		}
+		if len(r) != len(expected.record) {
+			t.Errorf("Line#%d should have %d elements, but %d exists", i+1, len(expected.record), len(r))
+		}
+		for j, v := range expected.record {
+			if r[j] != v {
+				t.Errorf("Line#%d Column#%d should be \"%s\", but \"%s\"", i+1, j+1, v, r[j])
+			}
+		}
+	}
+}
+
+func TestExcelReaderExceedSheetNumber(t *testing.T) {
+	dialect := &FileDialect{
+		SheetNumber: 10,
+	}
+	_, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
+	if err == nil {
+		t.Fatalf("%d should exceed acutual sheet number", dialect.SheetNumber)
 	}
 }
