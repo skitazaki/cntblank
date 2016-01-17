@@ -38,6 +38,9 @@ func TestReport(t *testing.T) {
 		{"Column001", "0", "0.0000"},
 		{"Column002", "1", "0.5000"},
 		{"Column003", "2", "1.0000"},
+		{"Column004", "1", "0.5000"},
+		{"Column005", "1", "0.5000"},
+		{"Column006", "1", "0.5000"},
 	} {
 		f := report.fields[i]
 		r := f.format(report.records)
