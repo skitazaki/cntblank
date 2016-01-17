@@ -175,6 +175,7 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 			f := new(ReportField)
 			f.seq = i + 1
 			f.name = fmt.Sprintf("Column%03d", i+1)
+			f.blank = r.records - 1 // suppose all cells are blank until up to here.
 			r.fields = append(r.fields, f)
 		}
 	}
