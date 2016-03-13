@@ -129,16 +129,19 @@ Libraries:
 - gopkg.in/alecthomas/kingpin.v2
 - github.com/asaskevich/govalidator
 - github.com/tealeg/xlsx
+- golang.org/x/text/encoding/japanese
 
 ### Build
 
+Build process requires `gb`.
+
 ```bash
-$ go build -o cntblank
+$ gb build
 
 OR
 
 $ make build
 ```
 
-`build.sh` is a build script to generate binary files for multiple architecture
-using docker container. And, `make` wraps whole processes to generate binaries.
+To generate binary files for multiple architecture,
+simply run `make dist`.

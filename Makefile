@@ -1,24 +1,31 @@
 all: clean build test version dist
 
 setup:
-	go get -d
+	go get github.com/constabulary/gb/...
+	gb vendor restore
 
-build: main.go app.go report.go dtparse.go
-	go fmt
-	go vet
-	go build -o cntblank
+build: src/cntblank/main.go src/cntblank/app.go src/cntblank/report.go src/cntblank/dtparse.go
+	go fmt src/cntblank/*
+	go vet src/cntblank/*
+	gb build
 
-test: app_test.go
-	go test
+test:
+	gb test
 
 version: build
-	./cntblank --version
-	./cntblank --help || :
+	@./bin/cntblank --version
+	@./bin/cntblank --help || :
 
 dist:
-	./build.sh
+	env GOOS=darwin  GOARCH=386   gb build
+	env GOOS=darwin  GOARCH=amd64 gb build
+	env GOOS=linux   GOARCH=386   gb build
+	env GOOS=linux   GOARCH=amd64 gb build
+	env GOOS=windows GOARCH=386   gb build
+	env GOOS=windows GOARCH=amd64 gb build
+	-@md5sum bin/*
 
 clean:
-	rm -fr dist
+	rm -fr bin pkg
 
 .PHONY: clean
