@@ -24,6 +24,9 @@ _testmain.go
 *.prof
 
 # Binary files
-cntblank
-dist/
+bin/
+pkg/
 
+# Vendor controls
+vendor/*
+!/vendor/manifest

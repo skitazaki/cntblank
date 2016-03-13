@@ -129,11 +129,14 @@ Libraries:
 - gopkg.in/alecthomas/kingpin.v2
 - github.com/asaskevich/govalidator
 - github.com/tealeg/xlsx
+- golang.org/x/text/encoding/japanese
 
 ### Build
 
+Build process requires `gb`.
+
 ```bash
-$ go build -o cntblank
+$ gb build
 
 OR
 
