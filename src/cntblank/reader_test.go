@@ -18,6 +18,46 @@ func getTestfilePath(fname string) (path string, err error) {
 	return filepath.Join(projectDir, fname), nil
 }
 
+func TestReader(t *testing.T) {
+	dialect := &FileDialect{
+		HasHeader: true,
+		Comma:     '\t',
+	}
+	path, err := getTestfilePath("prefecture_jp.tsv")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	reader, err := OpenFile(path, dialect)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if reader.md5hex != "4884d04103df0fd8a9e792866ca0b870" {
+		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
+	}
+	for i, expected := range []struct {
+		record []string
+	}{
+		{[]string{"都道府県コード", "都道府県"}},
+		{[]string{"01", "北海道"}},
+		{[]string{"02", "青森県"}},
+		{[]string{"03", "岩手県"}},
+		{[]string{"04", "宮城県"}},
+	} {
+		r, err := reader.Read()
+		if err != nil {
+			t.Fatalf("Line#%d: %v", i+1, err)
+		}
+		if len(r) != len(expected.record) {
+			t.Errorf("Line#%d should have %d elements, but %d exists", i+1, len(expected.record), len(r))
+		}
+		for j, v := range expected.record {
+			if r[j] != v {
+				t.Errorf("Line#%d Column#%d should be \"%s\", but \"%s\"", i+1, j+1, v, r[j])
+			}
+		}
+	}
+}
+
 func TestExcelReader(t *testing.T) {
 	dialect := &FileDialect{
 		HasHeader: true,
@@ -29,6 +69,9 @@ func TestExcelReader(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
+	}
+	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
+		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string
@@ -64,6 +107,9 @@ func TestExcelReaderSheetOption(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
+	}
+	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
+		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string

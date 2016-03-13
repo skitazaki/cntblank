@@ -246,8 +246,8 @@ func TestReportWriterWithMetadata(t *testing.T) {
 		t.Errorf("Unexpected error: %s\n", err)
 	}
 	out := buffer.String()
-	expected := "# Field,0,\n"
-	expected += "# Record,0,\n"
+	expected := "# Field,0,,\n"
+	expected += "# Record,0,,\n"
 	expected += "seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maximum,#True,#False\n"
 	if out != expected {
 		t.Errorf("out=%q want %q", out, expected)
