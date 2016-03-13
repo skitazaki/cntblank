@@ -1,14 +1,32 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+func getTestfilePath(fname string) (path string, err error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	projectDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", "testdata"))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(projectDir, fname), nil
+}
 
 func TestExcelReader(t *testing.T) {
 	dialect := &FileDialect{
 		HasHeader: true,
 	}
-	reader, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
+	path, err := getTestfilePath("addrcode_jp.xlsx")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -39,7 +57,11 @@ func TestExcelReaderSheetOption(t *testing.T) {
 		HasHeader:   false,
 		SheetNumber: 2,
 	}
-	reader, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
+	path, err := getTestfilePath("addrcode_jp.xlsx")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -68,7 +90,11 @@ func TestExcelReaderExceedSheetNumber(t *testing.T) {
 	dialect := &FileDialect{
 		SheetNumber: 10,
 	}
-	_, err := OpenFile("testdata/addrcode_jp.xlsx", dialect)
+	path, err := getTestfilePath("addrcode_jp.xlsx")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	_, err = OpenFile(path, dialect)
 	if err == nil {
 		t.Fatalf("%d should exceed acutual sheet number", dialect.SheetNumber)
 	}

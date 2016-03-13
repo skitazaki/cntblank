@@ -23,7 +23,7 @@ dist:
 	env GOOS=linux   GOARCH=amd64 gb build
 	env GOOS=windows GOARCH=386   gb build
 	env GOOS=windows GOARCH=amd64 gb build
-	md5sum bin/*
+	-@md5sum bin/*
 
 clean:
 	rm -fr bin pkg
