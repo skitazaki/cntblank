@@ -143,5 +143,5 @@ OR
 $ make build
 ```
 
-`build.sh` is a build script to generate binary files for multiple architecture
-using docker container. And, `make` wraps whole processes to generate binaries.
+To generate binary files for multiple architecture,
+simply run `make dist`.
