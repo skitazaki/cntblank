@@ -133,7 +133,7 @@ $ gb vendor list
 
 ### Build
 
-*build* target calls `go fmt`, `go vet` and `gb build`.
+*build* target calls `go fmt`, `go vet`, `goimports`, and `gb build`.
 
 ```bash
 $ make build
