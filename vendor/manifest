@@ -4,7 +4,7 @@
 		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
-			"revision": "a26f43589d737684363ff856c5a0f9f24b946510",
+			"revision": "4b6ea7319e214d98c938f12692336f7ca9348d6b",
 			"branch": "master"
 		},
 		{
@@ -22,40 +22,40 @@
 		{
 			"importpath": "github.com/asaskevich/govalidator",
 			"repository": "https://github.com/asaskevich/govalidator",
-			"revision": "9699ab6b38bee2e02cd3fe8b99ecf67665395c96",
+			"revision": "50f582311784a55b42018d88643ccfceadf7ab61",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/tealeg/xlsx",
 			"repository": "https://github.com/tealeg/xlsx",
-			"revision": "711ead9e3d2a46410e8618f2f2ad33b0266edf6d",
+			"revision": "2b59b97479d67bfd7c2b5c10397de54ae049c107",
 			"branch": "master"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "a71fd10341b064c10f4a81ceac72bcf70f26ea34",
+			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
 			"branch": "master",
 			"path": "/encoding"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding/japanese",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "a71fd10341b064c10f4a81ceac72bcf70f26ea34",
+			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
 			"branch": "master",
 			"path": "/encoding/japanese"
 		},
 		{
 			"importpath": "golang.org/x/text/transform",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "a71fd10341b064c10f4a81ceac72bcf70f26ea34",
+			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
 			"branch": "master",
 			"path": "/transform"
 		},
 		{
 			"importpath": "gopkg.in/airbrake/gobrake.v2",
 			"repository": "https://gopkg.in/airbrake/gobrake.v2",
-			"revision": "c9d51adc624b5cc4c1bf8de730a09af4878ffe2d",
+			"revision": "31c8ff1fb8b79a6947e6565e9a6df535f98a6b94",
 			"branch": "master"
 		},
 		{
