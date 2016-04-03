@@ -1,4 +1,5 @@
-[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank)
+[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank/tree/master)
+[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=develop)](http://travis-ci.org/skitazaki/cntblank)
 
 # Count Blank Cells
 
@@ -113,33 +114,28 @@ help you to count up pseudo blank cells.
 
 ## Development
 
-- Golang 1.5
+- Golang 1.6
+- `gb`
 
 ### Setup and library dependency
 
-`Makefile` includes setup target calling `go get -d`:
+`Makefile` includes *setup* target calling `gb vendor restore`:
 
 ```bash
 $ make setup
 ```
 
-Libraries:
+To see libraries:
 
-- github.com/Sirupsen/logrus
-- gopkg.in/alecthomas/kingpin.v2
-- github.com/asaskevich/govalidator
-- github.com/tealeg/xlsx
-- golang.org/x/text/encoding/japanese
+```bash
+$ gb vendor list
+```
 
 ### Build
 
-Build process requires `gb`.
+*build* target calls `go fmt`, `go vet` and `gb build`.
 
 ```bash
-$ gb build
-
-OR
-
 $ make build
 ```
 
