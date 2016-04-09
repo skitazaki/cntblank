@@ -2,11 +2,13 @@ all: clean build test version dist
 
 setup:
 	go get github.com/constabulary/gb/...
+	go get golang.org/x/tools/cmd/goimports
 	gb vendor restore
 
 build: src/cntblank/main.go src/cntblank/app.go src/cntblank/report.go src/cntblank/dtparse.go
 	go fmt src/cntblank/*
 	go vet src/cntblank/*
+	goimports -w src/cntblank/*
 	gb build
 
 test:
