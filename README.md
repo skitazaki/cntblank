@@ -1,4 +1,5 @@
-[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank)
+[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank/tree/master)
+[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=develop)](http://travis-ci.org/skitazaki/cntblank)
 
 # Count Blank Cells
 
@@ -113,32 +114,30 @@ help you to count up pseudo blank cells.
 
 ## Development
 
-- Golang 1.5
+- Golang 1.6
+- `gb`
 
 ### Setup and library dependency
 
-`Makefile` includes setup target calling `go get -d`:
+`Makefile` includes *setup* target calling `gb vendor restore`:
 
 ```bash
 $ make setup
 ```
 
-Libraries:
+To see libraries:
 
-- github.com/Sirupsen/logrus
-- gopkg.in/alecthomas/kingpin.v2
-- github.com/asaskevich/govalidator
-- github.com/tealeg/xlsx
+```bash
+$ gb vendor list
+```
 
 ### Build
 
+*build* target calls `go fmt`, `go vet`, `goimports`, and `gb build`.
+
 ```bash
-$ go build -o cntblank
-
-OR
-
 $ make build
 ```
 
-`build.sh` is a build script to generate binary files for multiple architecture
-using docker container. And, `make` wraps whole processes to generate binaries.
+To generate binary files for multiple architecture,
+simply run `make dist`.

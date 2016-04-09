@@ -31,6 +31,7 @@ func (a *Application) run(path string, dialect *FileDialect) error {
 		return err
 	}
 	report.path = path
+	report.md5hex = reader.md5hex
 	a.putReport(*report)
 	return nil
 }

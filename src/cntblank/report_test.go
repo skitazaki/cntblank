@@ -38,6 +38,9 @@ func TestReport(t *testing.T) {
 		{"Column001", "0", "0.0000"},
 		{"Column002", "1", "0.5000"},
 		{"Column003", "2", "1.0000"},
+		{"Column004", "1", "0.5000"},
+		{"Column005", "1", "0.5000"},
+		{"Column006", "1", "0.5000"},
 	} {
 		f := report.fields[i]
 		r := f.format(report.records)
@@ -243,8 +246,8 @@ func TestReportWriterWithMetadata(t *testing.T) {
 		t.Errorf("Unexpected error: %s\n", err)
 	}
 	out := buffer.String()
-	expected := "# Field,0,\n"
-	expected += "# Record,0,\n"
+	expected := "# Field,0,,\n"
+	expected += "# Record,0,,\n"
 	expected += "seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maximum,#True,#False\n"
 	if out != expected {
 		t.Errorf("out=%q want %q", out, expected)

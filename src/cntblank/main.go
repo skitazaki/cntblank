@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 // Command line options.

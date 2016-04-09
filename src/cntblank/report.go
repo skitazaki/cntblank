@@ -33,6 +33,7 @@ var ReportOutputFields = []string{
 // Calculate report.
 type Report struct {
 	path      string
+	md5hex    string
 	hasHeader bool
 	records   int
 	fields    []*ReportField
@@ -175,6 +176,7 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 			f := new(ReportField)
 			f.seq = i + 1
 			f.name = fmt.Sprintf("Column%03d", i+1)
+			f.blank = r.records - 1 // suppose all cells are blank until up to here.
 			r.fields = append(r.fields, f)
 		}
 	}
@@ -252,11 +254,12 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 
 func (w *ReportWriter) Write(report Report) error {
 	if w.showMetadata {
-		preamble := make([]string, 3)
+		preamble := make([]string, 4)
 		if len(report.path) > 0 {
 			preamble[0] = "# File"
 			preamble[1] = report.path
 			preamble[2] = filepath.Base(report.path)
+			preamble[3] = report.md5hex
 			w.w.Write(preamble)
 		}
 		preamble[0] = "# Field"
@@ -266,6 +269,7 @@ func (w *ReportWriter) Write(report Report) error {
 		} else {
 			preamble[2] = ""
 		}
+		preamble[3] = ""
 		w.w.Write(preamble)
 		preamble[0] = "# Record"
 		preamble[1] = fmt.Sprint(report.records)

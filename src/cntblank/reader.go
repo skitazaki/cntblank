@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/md5"
 	"encoding/csv"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -30,7 +32,8 @@ type FileDialect struct {
 
 // Reader is a generic file reader.
 type Reader struct {
-	Path      string
+	path      string
+	md5hex    string
 	line      int
 	columns   map[int]int
 	err       int
@@ -50,10 +53,28 @@ func NewReader(r io.Reader, dialect *FileDialect) (reader *Reader, err error) {
 	return
 }
 
+// calcMd5Sum calculate MD5 digest and returns hex string.
+func calcMd5Sum(path string) (md5hex string, err error) {
+	hasher := md5.New()
+	fp, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer fp.Close()
+	if _, err := io.Copy(hasher, fp); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
 // OpenFile returns a new Reader that reads from path using dialect.
 func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 	if path == "" {
 		return NewReader(os.Stdin, dialect)
+	}
+	md5hex, err := calcMd5Sum(path)
+	if err != nil {
+		return nil, err
 	}
 	extension := filepath.Ext(path)
 	if extension == ".xlsx" {
@@ -73,7 +94,6 @@ func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 		}
 		reader = &Reader{
 			columns: make(map[int]int),
-			logger:  log.WithFields(nil),
 			slices:  feeds,
 		}
 	} else {
@@ -86,8 +106,9 @@ func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 		reader, err = NewReader(fp, dialect)
 		reader.fp = fp
 	}
-	reader.Path = path
+	reader.path = path
 	reader.logger = log.WithFields(log.Fields{"path": path})
+	reader.md5hex = md5hex
 	return
 }
 
