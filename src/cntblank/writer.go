@@ -149,9 +149,10 @@ func (w *ReportWriter) writeCsv(report Report) error {
 		writer.Write(ReportOutputFields)
 	}
 	// Put each field report.
-	for i := 0; i < len(report.Fields); i++ {
-		r := report.Fields[i]
-		writer.Write(r.format(report.Records))
+	for i, f := range report.Fields {
+		r := f.format(report.Records)
+		r[0] = fmt.Sprint(i + 1)
+		writer.Write(r)
 	}
 	writer.Flush()
 	return writer.Error()

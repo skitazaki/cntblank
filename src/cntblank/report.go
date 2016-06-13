@@ -22,7 +22,6 @@ type Report struct {
 
 // ReportField represents output field.
 type ReportField struct {
-	seq       int
 	Name      string    `json:"name"`
 	Blank     int       `json:"blank"`
 	MinLength int       `json:"minLength"`
@@ -42,7 +41,6 @@ type ReportField struct {
 
 func (r *ReportField) format(total int) []string {
 	s := make([]string, 14)
-	s[0] = fmt.Sprint(r.seq)
 	s[1] = r.Name
 	s[2] = fmt.Sprint(r.Blank)
 	ratio := float64(r.Blank) / float64(total)
@@ -107,7 +105,6 @@ func (r *Report) header(record []string) error {
 	}
 	for i := 0; i < len(record); i++ {
 		f := new(ReportField)
-		f.seq = i + 1
 		name := strings.TrimSpace(record[i])
 		if name != "" {
 			f.Name = strings.Replace(name, "\n", "", -1)
@@ -126,7 +123,6 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 	if size > len(r.Fields) {
 		for i := len(r.Fields); i < size; i++ {
 			f := new(ReportField)
-			f.seq = i + 1
 			f.Name = fmt.Sprintf("Column%03d", i+1)
 			f.Blank = r.Records - 1 // suppose all cells are blank until up to here.
 			r.Fields = append(r.Fields, f)
@@ -152,6 +148,10 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 		}
 		if valInt, err := strconv.Atoi(val); err == nil {
 			v := float64(valInt)
+			if f.TypeInt == 0 {
+				f.Minimum = v
+				f.Maximum = v
+			}
 			if v < f.Minimum {
 				f.Minimum = v
 			}
@@ -161,6 +161,10 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 			f.TypeInt++
 		}
 		if valFloat, err := strconv.ParseFloat(val, 64); err == nil {
+			if f.TypeFloat == 0 {
+				f.Minimum = valFloat
+				f.Maximum = valFloat
+			}
 			if valFloat < f.Minimum {
 				f.Minimum = valFloat
 			}
