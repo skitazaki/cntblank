@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/text/encoding/japanese"
@@ -30,21 +30,22 @@ const (
 )
 
 func (s Format) String() string {
-    switch s {
-    case Csv:
-        return "CSV"
-    case Excel:
-        return "Excel"
-    case JSON:
-        return "JSON"
-    case Text:
-        return "Text"
-    case HTML:
-        return "HTML"
-    default:
-        return "Unknown"
-    }
+	switch s {
+	case Csv:
+		return "CSV"
+	case Excel:
+		return "Excel"
+	case JSON:
+		return "JSON"
+	case Text:
+		return "Text"
+	case HTML:
+		return "HTML"
+	default:
+		return "Unknown"
+	}
 }
+
 // ReportOutputFields is a header line to write.
 var ReportOutputFields = []string{
 	"seq",
@@ -101,6 +102,8 @@ func (w *ReportWriter) Write(report Report) error {
 	switch w.format {
 	case Csv:
 		return w.writeCsv(report)
+	case JSON:
+		return w.writeJSON(report)
 	}
 	log.Errorf("not implemented yet: format=%v", w.format)
 	return nil
@@ -120,16 +123,16 @@ func (w *ReportWriter) writeCsv(report Report) error {
 
 	if w.dialect.HasMetadata {
 		preamble := make([]string, 4)
-		if len(report.path) > 0 {
+		if len(report.Path) > 0 {
 			preamble[0] = "# File"
-			preamble[1] = report.path
-			preamble[2] = filepath.Base(report.path)
-			preamble[3] = report.md5hex
+			preamble[1] = report.Path
+			preamble[2] = report.Filename
+			preamble[3] = report.Md5hex
 			writer.Write(preamble)
 		}
 		preamble[0] = "# Field"
-		preamble[1] = fmt.Sprint(len(report.fields))
-		if report.hasHeader {
+		preamble[1] = fmt.Sprint(len(report.Fields))
+		if report.HasHeader {
 			preamble[2] = "(has header)"
 		} else {
 			preamble[2] = ""
@@ -137,7 +140,7 @@ func (w *ReportWriter) writeCsv(report Report) error {
 		preamble[3] = ""
 		writer.Write(preamble)
 		preamble[0] = "# Record"
-		preamble[1] = fmt.Sprint(report.records)
+		preamble[1] = fmt.Sprint(report.Records)
 		preamble[2] = ""
 		writer.Write(preamble)
 	}
@@ -146,10 +149,19 @@ func (w *ReportWriter) writeCsv(report Report) error {
 		writer.Write(ReportOutputFields)
 	}
 	// Put each field report.
-	for i := 0; i < len(report.fields); i++ {
-		r := report.fields[i]
-		writer.Write(r.format(report.records))
+	for i := 0; i < len(report.Fields); i++ {
+		r := report.Fields[i]
+		writer.Write(r.format(report.Records))
 	}
 	writer.Flush()
 	return writer.Error()
+}
+
+func (w *ReportWriter) writeJSON(report Report) error {
+	b, err := json.Marshal(report)
+	if err != nil {
+		return err
+	}
+	w.w.Write(b)
+	return nil
 }

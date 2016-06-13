@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -25,8 +26,6 @@ func (a *Application) run(path string, dialect *FileDialect) error {
 	if err != nil {
 		return err
 	}
-	report.path = path
-	report.md5hex = reader.md5hex
 	a.putReport(*report)
 	return nil
 }
@@ -35,6 +34,9 @@ func (a *Application) run(path string, dialect *FileDialect) error {
 func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
 	report = new(Report)
+	report.Path = reader.path
+	report.Filename = filepath.Base(reader.path)
+	report.Md5hex = reader.md5hex
 	if dialect.HasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
@@ -48,7 +50,7 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 			logger.Error(err)
 			return nil, err
 		}
-		logger.Info("start parsing with ", len(report.fields), " columns.")
+		logger.Info("start parsing with ", len(report.Fields), " columns.")
 	} else {
 		logger.Info("start parsing without header row")
 	}
@@ -69,7 +71,7 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 		}
 	}
 	logger.Infof("get %d records with %d columns",
-		report.records, len(report.fields))
+		report.Records, len(report.Fields))
 	return report, nil
 }
 

@@ -12,100 +12,88 @@ import (
 
 // Report presents tabular contents description.
 type Report struct {
-	path      string
-	md5hex    string
-	hasHeader bool
-	records   int
-	fields    []*ReportField
+	Path      string         `json:"path,omitempty"`
+	Filename  string         `json:"filename,omitempty"`
+	Md5hex    string         `json:"md5,omitempty"`
+	HasHeader bool           `json:"header"`
+	Records   int            `json:"records"`
+	Fields    []*ReportField `json:"fields"`
 }
 
 // ReportField represents output field.
 type ReportField struct {
-	seq        int
-	name       string
-	blank      int
-	minLength  int
-	maxLength  int
-	minimum    int
-	maximum    int
-	minimumF   float64
-	maximumF   float64
-	minimumT   time.Time
-	maximumT   time.Time
-	trueCount  int
-	falseCount int
-	intType    int
-	floatType  int
-	boolType   int
-	timeType   int
-	fullWidth  int
+	seq       int
+	Name      string    `json:"name"`
+	Blank     int       `json:"blank"`
+	MinLength int       `json:"minLength"`
+	MaxLength int       `json:"maxLength"`
+	Minimum   float64   `json:"minimin"`
+	Maximum   float64   `json:"maximum"`
+	MinTime   time.Time `json:"minTime,omitempty"`
+	MaxTime   time.Time `json:"maxTime,omitempty"`
+	BoolTrue  int       `json:"boolTrue"`
+	BoolFalse int       `json:"boolFalse"`
+	TypeInt   int       `json:"typeInt,omitempty"`
+	TypeFloat int       `json:"typeFloat,omitempty"`
+	TypeBool  int       `json:"typeBool,omitempty"`
+	TypeTime  int       `json:"typeTime,omitempty"`
+	fullWidth int
 }
 
 func (r *ReportField) format(total int) []string {
 	s := make([]string, 14)
 	s[0] = fmt.Sprint(r.seq)
-	s[1] = r.name
-	s[2] = fmt.Sprint(r.blank)
-	ratio := float64(r.blank) / float64(total)
+	s[1] = r.Name
+	s[2] = fmt.Sprint(r.Blank)
+	ratio := float64(r.Blank) / float64(total)
 	s[3] = fmt.Sprintf("%.4f", ratio)
-	if r.minLength > 0 {
-		s[4] = fmt.Sprint(r.minLength)
+	if r.MinLength > 0 {
+		s[4] = fmt.Sprint(r.MinLength)
 	} else {
 		s[4] = ""
 	}
-	if r.maxLength > 0 {
-		s[5] = fmt.Sprint(r.maxLength)
+	if r.MaxLength > 0 {
+		s[5] = fmt.Sprint(r.MaxLength)
 	} else {
 		s[5] = ""
 	}
-	if r.intType > 0 {
-		s[6] = fmt.Sprint(r.intType)
+	if r.TypeInt > 0 {
+		s[6] = fmt.Sprint(r.TypeInt)
 	} else {
 		s[6] = ""
 	}
-	if r.floatType > 0 {
-		s[7] = fmt.Sprint(r.floatType)
+	if r.TypeFloat > 0 {
+		s[7] = fmt.Sprint(r.TypeFloat)
 	} else {
 		s[7] = ""
 	}
-	if r.boolType > 0 {
-		s[8] = fmt.Sprint(r.boolType)
+	if r.TypeBool > 0 {
+		s[8] = fmt.Sprint(r.TypeBool)
 	} else {
 		s[8] = ""
 	}
-	if r.timeType > 0 {
-		s[9] = fmt.Sprint(r.timeType)
+	if r.TypeTime > 0 {
+		s[9] = fmt.Sprint(r.TypeTime)
 	} else {
 		s[9] = ""
 	}
 	// Min/Max comparison.
-	if r.timeType > r.floatType {
-		s[10] = r.minimumT.Format("2006-01-02 15:04:05")
-		s[11] = r.maximumT.Format("2006-01-02 15:04:05")
-	} else if r.floatType > 0 && r.intType > 0 {
-		if float64(r.minimum) <= r.minimumF {
-			s[10] = fmt.Sprint(r.minimum)
-		} else {
-			s[10] = fmt.Sprintf("%.4f", r.minimumF)
-		}
-		if float64(r.maximum) <= r.maximumF {
-			s[11] = fmt.Sprint(r.maximum)
-		} else {
-			s[11] = fmt.Sprintf("%.4f", r.maximumF)
-		}
-	} else if r.floatType > 0 {
-		s[10] = fmt.Sprintf("%.4f", r.minimumF)
-		s[11] = fmt.Sprintf("%.4f", r.maximumF)
-	} else if r.intType > 0 {
-		s[10] = fmt.Sprint(r.minimum)
-		s[11] = fmt.Sprint(r.maximum)
+	if r.TypeTime > r.TypeFloat {
+		s[10] = r.MinTime.Format("2006-01-02 15:04:05")
+		s[11] = r.MaxTime.Format("2006-01-02 15:04:05")
+	} else if r.TypeFloat > 0 {
+		s[10] = fmt.Sprintf("%.4f", r.Minimum)
+		s[11] = fmt.Sprintf("%.4f", r.Maximum)
+	} else if r.TypeInt > 0 {
+		s[10] = fmt.Sprint(r.Minimum)
+		s[11] = fmt.Sprint(r.Maximum)
 	} else {
 		s[10] = ""
 		s[11] = ""
 	}
-	if r.boolType > 0 {
-		s[12] = fmt.Sprint(r.trueCount)
-		s[13] = fmt.Sprint(r.falseCount)
+	if r.TypeBool > 0 {
+		s[12] = fmt.Sprint(r.BoolTrue)
+		s[13] = fmt.Sprint(r.BoolFalse)
 	} else {
 		s[12] = ""
 		s[13] = ""
@@ -122,95 +110,86 @@ func (r *Report) header(record []string) error {
 		f.seq = i + 1
 		name := strings.TrimSpace(record[i])
 		if name != "" {
-			f.name = strings.Replace(name, "\n", "", -1)
+			f.Name = strings.Replace(name, "\n", "", -1)
 		} else {
-			f.name = fmt.Sprintf("Column%03d", i+1)
+			f.Name = fmt.Sprintf("Column%03d", i+1)
 		}
-		r.fields = append(r.fields, f)
+		r.Fields = append(r.Fields, f)
 	}
-	r.hasHeader = true
+	r.HasHeader = true
 	return nil
 }
 
 func (r *Report) parseRecord(record []string) (nullCount int) {
-	r.records++
+	r.Records++
 	size := len(record)
-	if size > len(r.fields) {
-		for i := len(r.fields); i < size; i++ {
+	if size > len(r.Fields) {
+		for i := len(r.Fields); i < size; i++ {
 			f := new(ReportField)
 			f.seq = i + 1
-			f.name = fmt.Sprintf("Column%03d", i+1)
-			f.blank = r.records - 1 // suppose all cells are blank until up to here.
-			r.fields = append(r.fields, f)
+			f.Name = fmt.Sprintf("Column%03d", i+1)
+			f.Blank = r.Records - 1 // suppose all cells are blank until up to here.
+			r.Fields = append(r.Fields, f)
 		}
 	}
 	for i := 0; i < size; i++ {
-		f := r.fields[i]
+		f := r.Fields[i]
 		val := strings.TrimSpace(record[i])
 		if len(val) == 0 {
 			nullCount++
-			f.blank++
+			f.Blank++
 			continue
 		}
 		stringLength := utf8.RuneCountInString(val)
-		if f.minLength == 0 || f.minLength > stringLength {
-			f.minLength = stringLength
+		if f.MinLength == 0 || f.MinLength > stringLength {
+			f.MinLength = stringLength
 		}
-		if f.maxLength < stringLength {
-			f.maxLength = stringLength
+		if f.MaxLength < stringLength {
+			f.MaxLength = stringLength
 		}
 		if valid.IsFullWidth(val) {
 			f.fullWidth++
 		}
 		if valInt, err := strconv.Atoi(val); err == nil {
-			if f.intType == 0 {
-				f.minimum = valInt
-				f.maximum = valInt
-			} else {
-				if valInt < f.minimum {
-					f.minimum = valInt
-				}
-				if valInt > f.maximum {
-					f.maximum = valInt
-				}
+			v := float64(valInt)
+			if v < f.Minimum {
+				f.Minimum = v
 			}
-			f.intType++
+			if v > f.Maximum {
+				f.Maximum = v
+			}
+			f.TypeInt++
 		}
 		if valFloat, err := strconv.ParseFloat(val, 64); err == nil {
-			if f.floatType == 0 {
-				f.minimumF = valFloat
-				f.maximumF = valFloat
-			} else {
-				if valFloat < f.minimumF {
-					f.minimumF = valFloat
-				}
-				if valFloat > f.maximumF {
-					f.maximumF = valFloat
-				}
+			if valFloat < f.Minimum {
+				f.Minimum = valFloat
 			}
-			f.floatType++
+			if valFloat > f.Maximum {
+				f.Maximum = valFloat
+			}
+			f.TypeFloat++
 		}
 		if valBool, err := strconv.ParseBool(val); err == nil {
 			if valBool {
-				f.trueCount++
+				f.BoolTrue++
 			} else {
-				f.falseCount++
+				f.BoolFalse++
 			}
-			f.boolType++
+			f.TypeBool++
 		}
 		if valTime, err := parseDateTime(val); err == nil {
-			if f.timeType == 0 {
-				f.minimumT = valTime
-				f.maximumT = valTime
+			if f.TypeTime == 0 {
+				f.MinTime = valTime
+				f.MaxTime = valTime
 			} else {
-				if valTime.Before(f.minimumT) {
-					f.minimumT = valTime
+				if valTime.Before(f.MinTime) {
+					f.MinTime = valTime
 				}
-				if valTime.After(f.maximumT) {
-					f.maximumT = valTime
+				if valTime.After(f.MaxTime) {
+					f.MaxTime = valTime
 				}
 			}
-			f.timeType++
+			f.TypeTime++
 		}
 	}
 	return nullCount
