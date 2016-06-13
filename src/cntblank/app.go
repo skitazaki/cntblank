@@ -35,7 +35,9 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 	logger := log.WithFields(a.logfields)
 	report = new(Report)
 	report.Path = reader.path
-	report.Filename = filepath.Base(reader.path)
+	if len(reader.path) > 0 {
+		report.Filename = filepath.Base(reader.path)
+	}
 	report.MD5hex = reader.md5hex
 	if dialect.HasHeader {
 		// Use first line as header name if flag is not specified.
