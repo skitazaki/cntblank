@@ -127,7 +127,7 @@ func (w *ReportWriter) writeCsv(report Report) error {
 			preamble[0] = "# File"
 			preamble[1] = report.Path
 			preamble[2] = report.Filename
-			preamble[3] = report.Md5hex
+			preamble[3] = report.MD5hex
 			writer.Write(preamble)
 		}
 		preamble[0] = "# Field"

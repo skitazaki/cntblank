@@ -99,18 +99,18 @@ func TestReportTypeDetection(t *testing.T) {
 		if f.Blank != tc.blank {
 			t.Errorf("#%d fail to count blank: actual=%d, expected=%d", i+1, f.Blank, tc.blank)
 		}
-		if f.Minimum != tc.minimum {
-			t.Errorf("#%d fail to calculate minimum value: actual=%f, expected=%f", i+1, f.Minimum, tc.minimum)
+		if f.TypeFloat > 0 && *f.Minimum != tc.minimum {
+			t.Errorf("#%d fail to calculate minimum value: actual=%f, expected=%f", i+1, *f.Minimum, tc.minimum)
 		}
-		if f.Maximum != tc.maximum {
-			t.Errorf("#%d fail to calculate maximum value: actual=%f, expected=%f", i+1, f.Maximum, tc.maximum)
+		if f.TypeFloat > 0 && *f.Maximum != tc.maximum {
+			t.Errorf("#%d fail to calculate maximum value: actual=%f, expected=%f", i+1, *f.Maximum, tc.maximum)
 		}
 		if tc.minimumT != "" {
 			tt, err := time.Parse("2006-01-02 15:4", tc.minimumT)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if f.MinTime != tt {
+			if *f.MinTime != tt {
 				t.Errorf("#%d fail to calculate minimum time value: actual=%v, expected=%v", i+1, f.MinTime, tt)
 			}
 		}
@@ -119,15 +119,15 @@ func TestReportTypeDetection(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if f.MaxTime != tt {
+			if *f.MaxTime != tt {
 				t.Errorf("#%d fail to calculate maximum time value: actual=%v, expected=%v", i+1, f.MaxTime, tt)
 			}
 		}
-		if f.BoolTrue != tc.trueCount {
-			t.Errorf("#%d fail to count boolean true: actual=%d, expected=%d", i+1, f.BoolTrue, tc.trueCount)
+		if f.TypeBool > 0 && *f.BoolTrue != tc.trueCount {
+			t.Errorf("#%d fail to count boolean true: actual=%d, expected=%d", i+1, *f.BoolTrue, tc.trueCount)
 		}
-		if f.BoolFalse != tc.falseCount {
-			t.Errorf("#%d fail to count boolean false: actual=%d, expected=%d", i+1, f.BoolFalse, tc.falseCount)
+		if f.TypeBool > 0 && *f.BoolFalse != tc.falseCount {
+			t.Errorf("#%d fail to count boolean false: actual=%d, expected=%d", i+1, *f.BoolFalse, tc.falseCount)
 		}
 		if f.TypeInt != tc.intType {
 			t.Errorf("#%d fail to count integer type: actual=%d, expected=%d", i+1, f.TypeInt, tc.intType)
@@ -196,12 +196,14 @@ func TestReportFieldFormat(t *testing.T) {
 		field.TypeBool = tt.Types[2]
 		field.TypeTime = tt.Types[3]
 		if len(tt.Float) > 0 {
-			field.Minimum = tt.Float[0]
-			field.Maximum = tt.Float[1]
+			field.Minimum = &tt.Float[0]
+			field.Maximum = &tt.Float[1]
 		}
 		if len(tt.Time) > 0 {
-			field.MinTime, _ = time.Parse("2006-01-02", tt.Time[0])
-			field.MaxTime, _ = time.Parse("2006-01-02", tt.Time[1])
+			t1, _ := time.Parse("2006-01-02", tt.Time[0])
+			t2, _ := time.Parse("2006-01-02", tt.Time[1])
+			field.MinTime = &t1
+			field.MaxTime = &t2
 		}
 		expected := tt.Expected
 		f := field.format(100)

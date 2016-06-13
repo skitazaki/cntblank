@@ -14,7 +14,7 @@ import (
 type Report struct {
 	Path      string         `json:"path,omitempty"`
 	Filename  string         `json:"filename,omitempty"`
-	Md5hex    string         `json:"md5,omitempty"`
+	MD5hex    string         `json:"md5,omitempty"`
 	HasHeader bool           `json:"header"`
 	Records   int            `json:"records"`
 	Fields    []*ReportField `json:"fields"`
@@ -22,20 +22,20 @@ type Report struct {
 
 // ReportField represents output field.
 type ReportField struct {
-	Name      string    `json:"name"`
-	Blank     int       `json:"blank"`
-	MinLength int       `json:"minLength"`
-	MaxLength int       `json:"maxLength"`
-	Minimum   float64   `json:"minimin"`
-	Maximum   float64   `json:"maximum"`
-	MinTime   time.Time `json:"minTime,omitempty"`
-	MaxTime   time.Time `json:"maxTime,omitempty"`
-	BoolTrue  int       `json:"boolTrue"`
-	BoolFalse int       `json:"boolFalse"`
-	TypeInt   int       `json:"typeInt,omitempty"`
-	TypeFloat int       `json:"typeFloat,omitempty"`
-	TypeBool  int       `json:"typeBool,omitempty"`
-	TypeTime  int       `json:"typeTime,omitempty"`
+	Name      string     `json:"name"`
+	Blank     int        `json:"blank"`
+	MinLength int        `json:"minLength"`
+	MaxLength int        `json:"maxLength"`
+	Minimum   *float64   `json:"minimum,omitempty"`
+	Maximum   *float64   `json:"maximum,omitempty"`
+	MinTime   *time.Time `json:"minTime,omitempty"`
+	MaxTime   *time.Time `json:"maxTime,omitempty"`
+	BoolTrue  *int       `json:"boolTrue,omitempty"`
+	BoolFalse *int       `json:"boolFalse,omitempty"`
+	TypeInt   int        `json:"typeInt,omitempty"`
+	TypeFloat int        `json:"typeFloat,omitempty"`
+	TypeBool  int        `json:"typeBool,omitempty"`
+	TypeTime  int        `json:"typeTime,omitempty"`
 	fullWidth int
 }
 
@@ -80,18 +80,18 @@ func (r *ReportField) format(total int) []string {
 		s[10] = r.MinTime.Format("2006-01-02 15:04:05")
 		s[11] = r.MaxTime.Format("2006-01-02 15:04:05")
 	} else if r.TypeFloat > 0 {
-		s[10] = fmt.Sprintf("%.4f", r.Minimum)
-		s[11] = fmt.Sprintf("%.4f", r.Maximum)
+		s[10] = fmt.Sprintf("%.4f", *r.Minimum)
+		s[11] = fmt.Sprintf("%.4f", *r.Maximum)
 	} else if r.TypeInt > 0 {
-		s[10] = fmt.Sprint(r.Minimum)
-		s[11] = fmt.Sprint(r.Maximum)
+		s[10] = fmt.Sprint(*r.Minimum)
+		s[11] = fmt.Sprint(*r.Maximum)
 	} else {
 		s[10] = ""
 		s[11] = ""
 	}
 	if r.TypeBool > 0 {
-		s[12] = fmt.Sprint(r.BoolTrue)
-		s[13] = fmt.Sprint(r.BoolFalse)
+		s[12] = fmt.Sprint(*r.BoolTrue)
+		s[13] = fmt.Sprint(*r.BoolFalse)
 	} else {
 		s[12] = ""
 		s[13] = ""
@@ -148,50 +148,63 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 		}
 		if valInt, err := strconv.Atoi(val); err == nil {
 			v := float64(valInt)
-			if f.TypeInt == 0 {
-				f.Minimum = v
-				f.Maximum = v
+			if f.Minimum == nil {
+				f.Minimum = new(float64)
+				*f.Minimum = v
 			}
-			if v < f.Minimum {
-				f.Minimum = v
+			if f.Maximum == nil {
+				f.Maximum = new(float64)
+				*f.Maximum = v
 			}
-			if v > f.Maximum {
-				f.Maximum = v
+			if v < *f.Minimum {
+				*f.Minimum = v
+			}
+			if v > *f.Maximum {
+				*f.Maximum = v
 			}
 			f.TypeInt++
 		}
 		if valFloat, err := strconv.ParseFloat(val, 64); err == nil {
-			if f.TypeFloat == 0 {
-				f.Minimum = valFloat
-				f.Maximum = valFloat
+			if f.Minimum == nil {
+				f.Minimum = new(float64)
+				*f.Minimum = valFloat
 			}
-			if valFloat < f.Minimum {
-				f.Minimum = valFloat
+			if f.Maximum == nil {
+				f.Maximum = new(float64)
+				*f.Maximum = valFloat
 			}
-			if valFloat > f.Maximum {
-				f.Maximum = valFloat
+			if valFloat < *f.Minimum {
+				*f.Minimum = valFloat
+			}
+			if valFloat > *f.Maximum {
+				*f.Maximum = valFloat
 			}
 			f.TypeFloat++
 		}
 		if valBool, err := strconv.ParseBool(val); err == nil {
+			if f.TypeBool == 0 {
+				f.BoolTrue = new(int)
+				f.BoolFalse = new(int)
+			}
 			if valBool {
-				f.BoolTrue++
+				*f.BoolTrue++
 			} else {
-				f.BoolFalse++
+				*f.BoolFalse++
 			}
 			f.TypeBool++
 		}
 		if valTime, err := parseDateTime(val); err == nil {
 			if f.TypeTime == 0 {
-				f.MinTime = valTime
-				f.MaxTime = valTime
-			} else {
-				if valTime.Before(f.MinTime) {
-					f.MinTime = valTime
-				}
-				if valTime.After(f.MaxTime) {
-					f.MaxTime = valTime
-				}
+				f.MinTime = new(time.Time)
+				f.MaxTime = new(time.Time)
+				*f.MinTime = valTime
+				*f.MaxTime = valTime
+			}
+			if valTime.Before(*f.MinTime) {
+				*f.MinTime = valTime
+			}
+			if valTime.After(*f.MaxTime) {
+				*f.MaxTime = valTime
 			}
 			f.TypeTime++
 		}
