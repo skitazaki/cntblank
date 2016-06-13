@@ -23,6 +23,7 @@ var (
 	cliSheet        = cli.Flag("sheet", "Excel sheet number which starts with 1.").Int()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
+	cliOutFormat    = cli.Flag("output-format", "Output format.").String()
 	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
 )
 
@@ -54,7 +55,7 @@ func main() {
 	}
 	inDialect, outDialect := populateIODialect()
 	// Run main application logic.
-	app, err := newApplication(output, outDialect)
+	app, err := newApplication(output, *cliOutFormat, outDialect)
 	if err != nil {
 		log.Fatal(err)
 		return

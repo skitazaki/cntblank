@@ -81,8 +81,8 @@ func (a *Application) putReport(report Report) {
 }
 
 // newApplication creates `Application` object to set some options.
-func newApplication(writer io.Writer, dialect *FileDialect) (a *Application, err error) {
+func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	a.writer = NewReportWriter(writer, dialect)
+	a.writer = NewReportWriter(writer, format, dialect)
 	return a, nil
 }

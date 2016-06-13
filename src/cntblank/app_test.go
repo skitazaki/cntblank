@@ -11,7 +11,7 @@ A,B
 C,D
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(buffer, &FileDialect{})
+	app, _ := newApplication(buffer, "", &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
@@ -40,7 +40,7 @@ PI,3.1415926535897932384
 ネイピア数,2.718281828459045235360287471352
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(buffer, &FileDialect{})
+	app, _ := newApplication(buffer, "", &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,
@@ -104,7 +104,7 @@ PI ,3.1415926535897932384 ,"blank after value "
  PI , 3.1415926535897932384 ," blank both of value "
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(buffer, &FileDialect{})
+	app, _ := newApplication(buffer, "", &FileDialect{})
 	dialect := &FileDialect{
 		Comma:     ',',
 		HasHeader: true,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -12,6 +13,38 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+// Format is output format
+type Format int
+
+const (
+	// Csv is delimiter separated values
+	Csv = iota + 1
+	// Excel is Microsoft office suite
+	Excel
+	// JSON is JSON object
+	JSON
+	// Text uses template
+	Text
+	// HTML uses template
+	HTML
+)
+
+func (s Format) String() string {
+    switch s {
+    case Csv:
+        return "CSV"
+    case Excel:
+        return "Excel"
+    case JSON:
+        return "JSON"
+    case Text:
+        return "Text"
+    case HTML:
+        return "HTML"
+    default:
+        return "Unknown"
+    }
+}
 // ReportOutputFields is a header line to write.
 var ReportOutputFields = []string{
 	"seq",
@@ -34,20 +67,46 @@ var ReportOutputFields = []string{
 type ReportWriter struct {
 	dialect *FileDialect
 	w       io.Writer
+	format  Format
 }
 
 // NewReportWriter returns a new ReportWriter that writes to w.
-func NewReportWriter(w io.Writer, dialect *FileDialect) *ReportWriter {
+func NewReportWriter(w io.Writer, format string, dialect *FileDialect) *ReportWriter {
 	if dialect == nil {
 		dialect = &FileDialect{}
+	}
+	var f Format
+	switch strings.ToLower(format) {
+	case "csv":
+		f = Csv
+	case "excel":
+		f = Excel
+	case "json":
+		f = JSON
+	case "text":
+		f = Text
+	case "html":
+		f = HTML
+	default:
+		f = Csv
 	}
 	return &ReportWriter{
 		dialect: dialect,
 		w:       w,
+		format:  f,
 	}
 }
 
 func (w *ReportWriter) Write(report Report) error {
+	switch w.format {
+	case Csv:
+		return w.writeCsv(report)
+	}
+	log.Errorf("not implemented yet: format=%v", w.format)
+	return nil
+}
+
+func (w *ReportWriter) writeCsv(report Report) error {
 	wr := w.w
 	if w.dialect.Encoding == "sjis" {
 		log.Info("use ShiftJIS encoder for output.")

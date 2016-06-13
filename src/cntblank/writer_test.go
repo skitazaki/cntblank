@@ -10,7 +10,7 @@ func TestReportWriterWithHeader(t *testing.T) {
 	dialect := &FileDialect{
 		HasHeader: true,
 	}
-	w := NewReportWriter(buffer, dialect)
+	w := NewReportWriter(buffer, "", dialect)
 	r := new(Report)
 	err := w.Write(*r)
 	if err != nil {
@@ -29,7 +29,7 @@ func TestReportWriterWithMetadata(t *testing.T) {
 		HasMetadata: true,
 		HasHeader:   true,
 	}
-	w := NewReportWriter(buffer, dialect)
+	w := NewReportWriter(buffer, "", dialect)
 	r := new(Report)
 	err := w.Write(*r)
 	if err != nil {
@@ -46,7 +46,7 @@ func TestReportWriterWithMetadata(t *testing.T) {
 
 func TestReportWriterWithoutMetadata(t *testing.T) {
 	buffer := &bytes.Buffer{}
-	w := NewReportWriter(buffer, nil)
+	w := NewReportWriter(buffer, "", nil)
 	r := new(Report)
 	err := w.Write(*r)
 	if err != nil {
