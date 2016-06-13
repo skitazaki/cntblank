@@ -1,20 +1,15 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
-
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 // Application object.
 type Application struct {
-	writer    *csv.Writer
-	putMeta   bool
+	writer    *ReportWriter
 	logfields log.Fields
 }
 
@@ -79,8 +74,7 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 }
 
 func (a *Application) putReport(report Report) {
-	writer := NewReportWriter(a.writer, a.putMeta)
-	err := writer.Write(report)
+	err := a.writer.Write(report)
 	if err != nil {
 		log.Error(err)
 	}
@@ -89,13 +83,6 @@ func (a *Application) putReport(report Report) {
 // newApplication creates `Application` object to set some options.
 func newApplication(writer io.Writer, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	if dialect.Encoding == "sjis" {
-		log.Info("use ShiftJIS encoder for output.")
-		encoder := japanese.ShiftJIS.NewEncoder()
-		writer = transform.NewWriter(writer, encoder)
-	}
-	a.writer = csv.NewWriter(writer)
-	a.writer.Comma = dialect.Comma
-	a.putMeta = dialect.HasMetadata
+	a.writer = NewReportWriter(writer, dialect)
 	return a, nil
 }
