@@ -32,3 +32,4 @@ vendor/*
 !/vendor/manifest
 
 bindata.go
+_build/

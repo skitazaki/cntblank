@@ -66,11 +66,9 @@ func main() {
 	} else {
 		files = append(files, "")
 	}
-	for _, file := range files {
-		err = app.run(file, inDialect)
-		if err != nil {
-			log.Error(err)
-		}
+	err = app.Run(files, inDialect)
+	if err != nil {
+		log.Error(err)
 	}
 }
 

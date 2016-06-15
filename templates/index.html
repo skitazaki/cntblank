@@ -151,10 +151,13 @@ body {
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar">
-            <li class="active"><a href="#">{{ .Filename }}</a></li>
+            {{range .}}
+            <li><a href="#">{{ .Filename }}</a></li>
+            {{end}}
           </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          {{range $report := .}}
           <h2 class="sub-header">{{ .Filename }}</h2>
             <table class="table table-striped">
               <thead>
@@ -206,7 +209,7 @@ body {
               </thead>
               <tbody>
                 {{range $i, $elem := .Fields}}
-                <tr{{if eq $.Records .Blank }} class="danger"{{end}}>
+                <tr{{if eq $report.Records .Blank }} class="danger"{{end}}>
                   <th>{{ plus1 $i }}</th>
                   <td>{{ .Name }}</td>
                   <td{{if eq 0 .Blank }} class="success"{{end}}>{{ renderInt .Blank }}</td>
@@ -227,6 +230,7 @@ body {
               </tbody>
             </table>
           </div>
+          {{end}}
         </div>
       </div>
     </div>

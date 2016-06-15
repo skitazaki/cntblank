@@ -23,7 +23,10 @@ version: build
 	@./bin/cntblank --help || :
 
 local: build
-	./bin/cntblank --output-format=html --output=_t.html testdata/addrcode_jp.xlsx
+	@[ -d _build ] || mkdir _build
+	./bin/cntblank --output-without-header --output-meta --output-format=csv --output=_build/t.txt testdata/addrcode_jp.xlsx testdata/prefecture_jp.tsv
+	./bin/cntblank --output-format=json --output=_build/t.json testdata/addrcode_jp.xlsx
+	./bin/cntblank --output-format=html --output=_build/t.html testdata/addrcode_jp.xlsx --input-delimiter=, testdata/elementary_school_teacher_ja.csv
 
 dist:
 	env GOOS=darwin  GOARCH=386   gb build
@@ -35,6 +38,6 @@ dist:
 	-@md5sum bin/*
 
 clean:
-	rm -fr bin pkg
+	rm -fr bin pkg _build
 
 .PHONY: clean
