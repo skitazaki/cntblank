@@ -4,8 +4,10 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"strings"
+	"time"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -104,6 +106,8 @@ func (w *ReportWriter) Write(report Report) error {
 		return w.writeCsv(report)
 	case JSON:
 		return w.writeJSON(report)
+	case HTML:
+		return w.writeHTML(report)
 	}
 	log.Errorf("not implemented yet: format=%v", w.format)
 	return nil
@@ -165,4 +169,49 @@ func (w *ReportWriter) writeJSON(report Report) error {
 	}
 	w.w.Write(b)
 	return nil
+}
+
+func (w *ReportWriter) writeHTML(report Report) error {
+	path := "templates/index.html"
+	b, err := Asset(path)
+	if err != nil {
+		// Asset was not found.
+		return err
+	}
+	fmap := template.FuncMap{
+		"deref": func(data interface{}) string {
+			switch vv := data.(type) {
+			case *string:
+				return fmt.Sprint(*vv)
+			case *int:
+				if vv == nil {
+					return ""
+				}
+				return RenderInteger("", *vv)
+			case *float64:
+				if vv == nil {
+					return ""
+				}
+				return RenderFloat("", *vv)
+			case *time.Time:
+				if vv == nil {
+					return ""
+				}
+				return (*vv).Format("2006-01-02 15:04:05")
+			default:
+				return fmt.Sprint(vv)
+			}
+		},
+		"plus1": func(i int) int {
+			return i + 1
+		},
+		"renderInt": func(i int) string {
+			return RenderInteger("#,###.", i)
+		},
+	}
+	tmpl, err := template.New("name").Funcs(fmap).Parse(fmt.Sprintf("%s", b))
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(w.w, report)
 }
