@@ -10,28 +10,38 @@ import (
 
 // Application object.
 type Application struct {
+	reports   []Report
 	writer    *ReportWriter
 	logfields log.Fields
 }
 
 // Run application main logic.
-func (a *Application) run(path string, dialect *FileDialect) error {
+func (a *Application) Run(pathList []string, dialect *FileDialect) error {
+	a.reports = make([]Report, len(pathList))
+	for i, path := range pathList {
+		report, err := a.process(path, dialect)
+		if err != nil {
+			log.Errorf("[%d] error while processing %s: %v", i+1, path, err)
+		}
+		if report != nil {
+			a.reports[i] = *report
+		}
+	}
+	return a.putReport()
+}
+
+func (a *Application) process(path string, dialect *FileDialect) (report *Report, err error) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer reader.Close()
 
-	report, err := a.cntblank(reader, dialect)
-	if err != nil {
-		return err
-	}
-	a.putReport(*report)
-	return nil
+	return a.cntblank(reader, dialect.HasHeader)
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Report, err error) {
+func (a *Application) cntblank(reader *Reader, hasHeader bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
 	report = new(Report)
 	report.Path = reader.path
@@ -39,7 +49,7 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 		report.Filename = filepath.Base(reader.path)
 	}
 	report.MD5hex = reader.md5hex
-	if dialect.HasHeader {
+	if hasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -77,11 +87,9 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 	return report, nil
 }
 
-func (a *Application) putReport(report Report) {
-	err := a.writer.Write(report)
-	if err != nil {
-		log.Error(err)
-	}
+func (a *Application) putReport() error {
+	log.Infof("write %d reports", len(a.reports))
+	return a.writer.Write(a.reports)
 }
 
 // newApplication creates `Application` object to set some options.

@@ -17,7 +17,7 @@ C,D
 		HasHeader: true,
 	}
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect)
+	report, err := app.cntblank(reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -46,7 +46,7 @@ PI,3.1415926535897932384
 		HasHeader: true,
 	}
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect)
+	report, err := app.cntblank(reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -110,7 +110,7 @@ PI ,3.1415926535897932384 ,"blank after value "
 		HasHeader: true,
 	}
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect)
+	report, err := app.cntblank(reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}

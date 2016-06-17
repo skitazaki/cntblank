@@ -4,8 +4,10 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"strings"
+	"time"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -98,18 +100,20 @@ func NewReportWriter(w io.Writer, format string, dialect *FileDialect) *ReportWr
 	}
 }
 
-func (w *ReportWriter) Write(report Report) error {
+func (w *ReportWriter) Write(reports []Report) error {
 	switch w.format {
 	case Csv:
-		return w.writeCsv(report)
+		return w.writeCsv(reports)
 	case JSON:
-		return w.writeJSON(report)
+		return w.writeJSON(reports)
+	case HTML:
+		return w.writeHTML(reports)
 	}
 	log.Errorf("not implemented yet: format=%v", w.format)
 	return nil
 }
 
-func (w *ReportWriter) writeCsv(report Report) error {
+func (w *ReportWriter) writeCsv(reports []Report) error {
 	wr := w.w
 	if w.dialect.Encoding == "sjis" {
 		log.Info("use ShiftJIS encoder for output.")
@@ -120,7 +124,18 @@ func (w *ReportWriter) writeCsv(report Report) error {
 	if w.dialect.Comma != 0 {
 		writer.Comma = w.dialect.Comma
 	}
+	for i, report := range reports {
+		if i > 0 {
+			writer.Write(nil)
+		}
+		log.Debugf("[%d] write csv file", i+1)
+		w.writeCsvOne(writer, report)
+	}
+	writer.Flush()
+	return writer.Error()
+}
 
+func (w *ReportWriter) writeCsvOne(writer *csv.Writer, report Report) error {
 	if w.dialect.HasMetadata {
 		preamble := make([]string, 4)
 		if len(report.Path) > 0 {
@@ -154,15 +169,59 @@ func (w *ReportWriter) writeCsv(report Report) error {
 		r[0] = fmt.Sprint(i + 1)
 		writer.Write(r)
 	}
-	writer.Flush()
 	return writer.Error()
 }
 
-func (w *ReportWriter) writeJSON(report Report) error {
-	b, err := json.Marshal(report)
+func (w *ReportWriter) writeJSON(reports []Report) error {
+	b, err := json.Marshal(reports)
 	if err != nil {
 		return err
 	}
 	w.w.Write(b)
 	return nil
+}
+
+func (w *ReportWriter) writeHTML(reports []Report) error {
+	path := "templates/index.html"
+	b, err := Asset(path)
+	if err != nil {
+		// Asset was not found.
+		return err
+	}
+	fmap := template.FuncMap{
+		"deref": func(data interface{}) string {
+			switch vv := data.(type) {
+			case *string:
+				return fmt.Sprint(*vv)
+			case *int:
+				if vv == nil {
+					return ""
+				}
+				return RenderInteger("", *vv)
+			case *float64:
+				if vv == nil {
+					return ""
+				}
+				return RenderFloat("", *vv)
+			case *time.Time:
+				if vv == nil {
+					return ""
+				}
+				return (*vv).Format("2006-01-02 15:04:05")
+			default:
+				return fmt.Sprint(vv)
+			}
+		},
+		"plus1": func(i int) int {
+			return i + 1
+		},
+		"renderInt": func(i int) string {
+			return RenderInteger("#,###.", i)
+		},
+	}
+	tmpl, err := template.New("name").Funcs(fmap).Parse(fmt.Sprintf("%s", b))
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(w.w, reports)
 }
