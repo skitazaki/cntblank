@@ -58,7 +58,7 @@ seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maxim
 - Default input/output delimiter is TAB.
 - Meta-information is file path, field length, and number of records.
 - If no file path arguments are given, process standard input.
-- Support JSON output.
+- Also support JSON and HTML output.
 
 ```text
 usage: cntblank [<flags>] [<tabfile>...]
