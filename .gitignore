@@ -30,3 +30,6 @@ pkg/
 # Vendor controls
 vendor/*
 !/vendor/manifest
+
+bindata.go
+_build/

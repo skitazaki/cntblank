@@ -18,10 +18,12 @@ var (
 	cliInDelimiter  = cli.Flag("input-delimiter", "Input field delimiter.").String()
 	cliOutDelimiter = cli.Flag("output-delimiter", "Output field delmiter.").String()
 	cliNoHeader     = cli.Flag("without-header", "Tabular does not have header line.").Bool()
+	cliOutNoHeader  = cli.Flag("output-without-header", "Output report does not have header line.").Bool()
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
 	cliSheet        = cli.Flag("sheet", "Excel sheet number which starts with 1.").Int()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
+	cliOutFormat    = cli.Flag("output-format", "Output format.").String()
 	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
 )
 
@@ -53,7 +55,7 @@ func main() {
 	}
 	inDialect, outDialect := populateIODialect()
 	// Run main application logic.
-	app, err := newApplication(output, outDialect)
+	app, err := newApplication(output, *cliOutFormat, outDialect)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -64,11 +66,9 @@ func main() {
 	} else {
 		files = append(files, "")
 	}
-	for _, file := range files {
-		err = app.run(file, inDialect)
-		if err != nil {
-			log.Error(err)
-		}
+	err = app.Run(files, inDialect)
+	if err != nil {
+		log.Error(err)
 	}
 }
 
@@ -123,6 +123,7 @@ func populateIODialect() (inDialect *FileDialect, outDialect *FileDialect) {
 	outDialect = &FileDialect{
 		Encoding:    outEncoding,
 		Comma:       outComma,
+		HasHeader:   !*cliOutNoHeader,
 		HasMetadata: *cliOutMeta,
 	}
 	return

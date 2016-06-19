@@ -1,46 +1,55 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
-
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
+	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 // Application object.
 type Application struct {
-	writer    *csv.Writer
-	putMeta   bool
+	reports   []Report
+	writer    *ReportWriter
 	logfields log.Fields
 }
 
 // Run application main logic.
-func (a *Application) run(path string, dialect *FileDialect) error {
+func (a *Application) Run(pathList []string, dialect *FileDialect) error {
+	a.reports = make([]Report, len(pathList))
+	for i, path := range pathList {
+		report, err := a.process(path, dialect)
+		if err != nil {
+			log.Errorf("[%d] error while processing %s: %v", i+1, path, err)
+		}
+		if report != nil {
+			a.reports[i] = *report
+		}
+	}
+	return a.putReport()
+}
+
+func (a *Application) process(path string, dialect *FileDialect) (report *Report, err error) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer reader.Close()
 
-	report, err := a.cntblank(reader, dialect)
-	if err != nil {
-		return err
-	}
-	report.path = path
-	report.md5hex = reader.md5hex
-	a.putReport(*report)
-	return nil
+	return a.cntblank(reader, dialect.HasHeader)
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Report, err error) {
+func (a *Application) cntblank(reader *Reader, hasHeader bool) (report *Report, err error) {
 	logger := log.WithFields(a.logfields)
 	report = new(Report)
-	if dialect.HasHeader {
+	report.Path = reader.path
+	if len(reader.path) > 0 {
+		report.Filename = filepath.Base(reader.path)
+	}
+	report.MD5hex = reader.md5hex
+	if hasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -53,7 +62,7 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 			logger.Error(err)
 			return nil, err
 		}
-		logger.Info("start parsing with ", len(report.fields), " columns.")
+		logger.Info("start parsing with ", len(report.Fields), " columns.")
 	} else {
 		logger.Info("start parsing without header row")
 	}
@@ -74,28 +83,18 @@ func (a *Application) cntblank(reader *Reader, dialect *FileDialect) (report *Re
 		}
 	}
 	logger.Infof("get %d records with %d columns",
-		report.records, len(report.fields))
+		report.Records, len(report.Fields))
 	return report, nil
 }
 
-func (a *Application) putReport(report Report) {
-	writer := NewReportWriter(a.writer, a.putMeta)
-	err := writer.Write(report)
-	if err != nil {
-		log.Error(err)
-	}
+func (a *Application) putReport() error {
+	log.Infof("write %d reports", len(a.reports))
+	return a.writer.Write(a.reports)
 }
 
 // newApplication creates `Application` object to set some options.
-func newApplication(writer io.Writer, dialect *FileDialect) (a *Application, err error) {
+func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	if dialect.Encoding == "sjis" {
-		log.Info("use ShiftJIS encoder for output.")
-		encoder := japanese.ShiftJIS.NewEncoder()
-		writer = transform.NewWriter(writer, encoder)
-	}
-	a.writer = csv.NewWriter(writer)
-	a.writer.Comma = dialect.Comma
-	a.putMeta = dialect.HasMetadata
+	a.writer = NewReportWriter(writer, format, dialect)
 	return a, nil
 }

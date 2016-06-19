@@ -11,7 +11,7 @@ Short examples:
 $ ./cntblank --output-meta testdata/prefecture_jp.tsv
 INFO[0000] start parsing with 2 columns.                 path=testdata/prefecture_jp.tsv
 INFO[0000] finish parsing 48 lines to get 47 records with 2 columns. 0 errors detected.  path=testdata/prefecture_jp.tsv
-# File          testdata/prefecture_jp.tsv      prefecture_jp.tsv
+# File          testdata/prefecture_jp.tsv      prefecture_jp.tsv    4884d04103df0fd8a9e792866ca0b870
 # Field         2                               (has header)
 # Record        47
 seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  #Bool   #Time    Minimum Maximum #True   #False
@@ -58,6 +58,7 @@ seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maxim
 - Default input/output delimiter is TAB.
 - Meta-information is file path, field length, and number of records.
 - If no file path arguments are given, process standard input.
+- Also support JSON and HTML output.
 
 ```text
 usage: cntblank [<flags>] [<tabfile>...]
@@ -65,22 +66,25 @@ usage: cntblank [<flags>] [<tabfile>...]
 Count blank cells on text-based tabular data.
 
 Flags:
-      --help            Show context-sensitive help (also try --help-long and --help-man).
-  -v, --verbose         Set verbose mode on.
+      --help                   Show context-sensitive help (also try --help-long and --help-man).
+  -v, --verbose                Set verbose mode on.
   -e, --input-encoding=INPUT-ENCODING
-                        Input encoding.
+                               Input encoding.
   -E, --output-encoding=OUTPUT-ENCODING
-                        Output encoding.
+                               Output encoding.
       --input-delimiter=INPUT-DELIMITER
-                        Input field delimiter.
+                               Input field delimiter.
       --output-delimiter=OUTPUT-DELIMITER
-                        Output field delmiter.
-      --without-header  Tabular does not have header line.
-      --strict          Check column size strictly.
-      --sheet=SHEET     Excel sheet number which starts with 1.
-      --output-meta     Put meta information.
-  -o, --output=OUTPUT   Output file.
-      --version         Show application version.
+                               Output field delmiter.
+      --without-header         Tabular does not have header line.
+      --output-without-header  Output report does not have header line.
+      --strict                 Check column size strictly.
+      --sheet=SHEET            Excel sheet number which starts with 1.
+      --output-meta            Put meta information.
+  -o, --output=OUTPUT          Output file.
+      --output-format=OUTPUT-FORMAT
+                               Output format.
+      --version                Show application version.
 
 Args:
   [<tabfile>]  Tabular data files.
