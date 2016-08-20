@@ -5,3 +5,18 @@ go:
   - tip
 install: make setup
 script: make
+deploy:
+  provider: releases
+  api_key:
+    secure: L4QNt5r+CksXPMuwbPNen/XYBIHPjPaIDPTnJk3Sj3s8B3VAn4lIvBBwgaYkSonMZj6Og1P4JDHxfqBd5zf4GnkqYXPlY3/w529vbstzQ9YFUNAHPdcHFX1Ov4/9f4h/vygKJqMlt4WyfQNB5NFOvZKS4RJDqEUl/CvViLJQ/HbfiXZw+W6gOVthG7oiCIScUvobSpxo+zjEUnz6u+LDmMDkEy23BPE9j+kqGWZhtiThr6bLUJETUepu+O1EYMAxwpkA/3eKqUTbh7Ac/VzOXdXr1aAb+5bBeOXbo3tQHd4Ki5sRsVWNwJ/yDA1gkRbFmabEvi88wFdO1FVlpHZuY8GNsgPSo2Pw4hgdbeWNh9JQIR3NRPqEcQdFUABbHFLCOvLkiUZ59+DraSsajpiQGsyPHq2btRcmLs5jYc4/ml7PZBmlT5g1NzeRurLrSZ7LkY1XQXXHjQB1ZThbyqD91Um7Z4bSCuwrRT7wS+sYTZqGn1NF1EPsxClWX188gI5G3gA7TdGBWSsXqfaZdfoPbIPDJhIDvpst8NfC9JjX6+LjERpCmHiUJmUGRE2j8oEbPFMQqZ4TpbOPwtZDYTvu6CbtM5NELLkZsRZHh/xGt0sRMSAr2FUoXo8gLXlJBwlXI0a6zyBQrtMSVzu+3jdWXvZiAIVtA0lbKwCSSi/ktoQ=
+  file:
+    - "bin/cntblank-darwin-386"
+    - "bin/cntblank-darwin-amd64"
+    - "bin/cntblank-linux-386"
+    - "bin/cntblank-linux-amd64"
+    - "bin/cntblank-windows-386.exe"
+    - "bin/cntblank-windows-amd64.exe"
+  skip_cleanup: true
+  on:
+    repo: skitazaki/cntblank
+    tags: true
