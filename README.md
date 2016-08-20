@@ -118,7 +118,7 @@ help you to count up pseudo blank cells.
 
 ## Development
 
-- Golang 1.6
+- Golang 1.7
 - `gb`
 
 ### Setup and library dependency

@@ -4,13 +4,13 @@
 		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
-			"revision": "4b6ea7319e214d98c938f12692336f7ca9348d6b",
+			"revision": "08a8a7c27e3d058a8989316a850daad1c10bf4ab",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/alecthomas/template",
 			"repository": "https://github.com/alecthomas/template",
-			"revision": "14fd436dd20c3cc65242a9f396b61bfc8a3926fc",
+			"revision": "a0175ee3bccc567396460bf5acd36800cb10c49c",
 			"branch": "master"
 		},
 		{
@@ -22,33 +22,33 @@
 		{
 			"importpath": "github.com/asaskevich/govalidator",
 			"repository": "https://github.com/asaskevich/govalidator",
-			"revision": "50f582311784a55b42018d88643ccfceadf7ab61",
+			"revision": "593d64559f7600f29581a3ee42177f5dbded27a9",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/tealeg/xlsx",
 			"repository": "https://github.com/tealeg/xlsx",
-			"revision": "2b59b97479d67bfd7c2b5c10397de54ae049c107",
+			"revision": "bd0ba13fd8a4fe9a529b18e09c23a886f08f7d9a",
 			"branch": "master"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/encoding"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding/japanese",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/encoding/japanese"
 		},
 		{
 			"importpath": "golang.org/x/text/transform",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/transform"
 		},
@@ -61,7 +61,7 @@
 		{
 			"importpath": "gopkg.in/alecthomas/kingpin.v2",
 			"repository": "https://gopkg.in/alecthomas/kingpin.v2",
-			"revision": "8cccfa8eb2e3183254457fb1749b2667fbc364c7",
+			"revision": "e5900212cbf65b181d3d8e08308ef06a01d117cf",
 			"branch": "master"
 		},
 		{
