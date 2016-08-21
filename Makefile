@@ -17,9 +17,11 @@ setup:  ## Install development tools and libraries
 
 build: src/cntblank/main.go src/cntblank/app.go src/cntblank/report.go  ## Build binary after linting source files
 	go-bindata -o src/${PROGRAM}/bindata.go templates
-	go fmt src/${PROGRAM}/*
-	go vet src/${PROGRAM}/*
-	goimports -w src/${PROGRAM}/*
+	for f in `find src -type f` ; do \
+		go fmt $$f ; \
+		go vet $$f ; \
+		goimports -w $$f ; \
+	done
 	gb build
 
 test:  ## Run the unit tests
