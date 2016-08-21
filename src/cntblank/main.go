@@ -24,7 +24,7 @@ var (
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
 	cliOutFormat    = cli.Flag("output-format", "Output format.").String()
-	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").ExistingFiles()
+	cliTabularFiles = cli.Arg("tabfile", "Tabular data files.").Strings()
 )
 
 func main() {
@@ -60,12 +60,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	var files []string
-	if len(*cliTabularFiles) > 0 {
-		files = *cliTabularFiles
-	} else {
-		files = append(files, "")
-	}
+	files := *cliTabularFiles
 	err = app.Run(files, inDialect)
 	if err != nil {
 		log.Error(err)
