@@ -3,11 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
-	"path"
 	"path/filepath"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -21,15 +17,23 @@ type Application struct {
 
 // Run application main logic.
 func (a *Application) Run(pathList []string, dialect *FileDialect) error {
-	var targets []string
+	var targets []TargetFile
 	if len(pathList) == 0 {
-		targets = append(targets, "")
+		targets = append(targets, TargetFile{})
 	} else {
-		targets = expandDir(pathList)
+		c, err := newFileCollector()
+		if err != nil {
+			return err
+		}
+		err = c.CollectAll(pathList)
+		if err != nil {
+			return err
+		}
+		targets = c.files
 	}
 	a.reports = make([]Report, len(targets))
 	for i, target := range targets {
-		report, err := a.process(target, dialect)
+		report, err := a.process(target.path, dialect)
 		if err != nil {
 			log.Errorf("[%d] error while processing %s: %v", i+1, target, err)
 		}
@@ -107,63 +111,4 @@ func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *A
 	a = new(Application)
 	a.writer = NewReportWriter(writer, format, dialect)
 	return a, nil
-}
-
-// expandDir expands files in directory.
-func expandDir(pathList []string) []string {
-	// TODO: Optional recursive traversing.
-	// TODO: Filter file name and/or extension to expand.
-	var files []string
-	for _, path := range pathList {
-		if len(path) == 0 {
-			continue
-		}
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			log.Infof("%v", err)
-			continue
-		}
-		if fileInfo.IsDir() {
-			log.Infof("expand directory: %s", path)
-			filesInDir, err := ioutil.ReadDir(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			var children []string
-			for _, file := range filesInDir {
-				if strings.HasPrefix(file.Name(), ".") {
-					// Skip hidden file.
-					continue
-				}
-				if isTabularFormat(file.Name()) {
-					// Only parse tablular format file.
-					children = append(children, filepath.Join(path, file.Name()))
-				} else if file.IsDir() {
-					children = append(children, filepath.Join(path, file.Name()))
-				}
-			}
-			c := expandDir(children)
-			files = append(files, c...)
-		} else {
-			files = append(files, path)
-		}
-	}
-	return files
-}
-
-func isTabularFormat(fname string) bool {
-	// TODO: Require more flexible filter implementation.
-	formats := []string{
-		".csv",
-		".tsv",
-		".txt",
-		".xlsx",
-	}
-	ext := strings.ToLower(path.Ext(fname))
-	for _, fmt := range formats {
-		if ext == fmt {
-			return true
-		}
-	}
-	return false
 }
