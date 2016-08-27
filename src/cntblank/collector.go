@@ -93,10 +93,14 @@ func (c *FileCollector) dispatch(p string, fileInfo os.FileInfo) error {
 func (c *FileCollector) isTarget(p string) bool {
 	if len(p) == 0 {
 		return false
-	} else if strings.HasPrefix(p, ".") {
+	} else if strings.HasPrefix(path.Base(p), ".") {
 		// Skip hidden file.
 		return false
 	}
+	if len(c.extentions) == 0 {
+		return true
+	}
+	// If file extentions are set, filter them.
 	ext := strings.ToLower(path.Ext(p))
 	for _, fmt := range c.extentions {
 		if ext == fmt {
@@ -106,14 +110,9 @@ func (c *FileCollector) isTarget(p string) bool {
 	return false
 }
 
-func newFileCollector() (c *FileCollector, err error) {
-	c = new(FileCollector)
-	c.recursive = true
-	c.extentions = []string{
-		".csv",
-		".tsv",
-		".txt",
-		".xlsx",
-	}
-	return c, nil
+func newFileCollector(recursive bool, extentions []string) *FileCollector {
+	c := new(FileCollector)
+	c.recursive = recursive
+	c.extentions = extentions
+	return c
 }

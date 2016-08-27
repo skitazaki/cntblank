@@ -10,6 +10,7 @@ import (
 
 // Application object.
 type Application struct {
+	collector *FileCollector
 	reports   []Report
 	writer    *ReportWriter
 	logfields log.Fields
@@ -21,21 +22,17 @@ func (a *Application) Run(pathList []string, dialect *FileDialect) error {
 	if len(pathList) == 0 {
 		targets = append(targets, TargetFile{})
 	} else {
-		c, err := newFileCollector()
+		err := a.collector.CollectAll(pathList)
 		if err != nil {
 			return err
 		}
-		err = c.CollectAll(pathList)
-		if err != nil {
-			return err
-		}
-		targets = c.files
+		targets = a.collector.files
 	}
 	a.reports = make([]Report, len(targets))
 	for i, target := range targets {
 		report, err := a.process(target.path, dialect)
 		if err != nil {
-			log.Errorf("[%d] error while processing %s: %v", i+1, target, err)
+			log.Errorf("[%d] error while processing %s: %v", i+1, target.path, err)
 		}
 		if report != nil {
 			a.reports[i] = *report
@@ -109,6 +106,12 @@ func (a *Application) putReport() error {
 // newApplication creates `Application` object to set some options.
 func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
+	a.collector = newFileCollector(true, []string{
+		".csv",
+		".tsv",
+		".txt",
+		".xlsx",
+	})
 	a.writer = NewReportWriter(writer, format, dialect)
 	return a, nil
 }
