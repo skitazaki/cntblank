@@ -2,10 +2,6 @@ package main
 
 import (
 	"bytes"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -153,41 +149,6 @@ PI ,3.1415926535897932384 ,"blank after value "
 			t.Logf("#%d field maximum length is ok.", i+1)
 		} else {
 			t.Errorf("#%d field has invalid maxLength: actual=%d, expected=%d", i+1, f.MaxLength, tc.maxLength)
-		}
-	}
-}
-
-func TestExpandDir(t *testing.T) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	rootDir, err := filepath.Abs(filepath.Join(pwd, "..", ".."))
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	dir := filepath.Join(rootDir, "testdata")
-	list := []string{filepath.Join(rootDir, "Makefile"), dir}
-	files := expandDir(list)
-	if len(files) == 4 {
-		t.Log(files)
-	} else {
-		t.Errorf("expected files is %d, but actual files is %d", 4, len(files))
-	}
-	if path.Base(files[0]) != "Makefile" {
-		t.Errorf("first element is %s", files[0])
-	}
-	for i, expected := range []string{
-		"addrcode_jp.xlsx",
-		"elementary_school_teacher_ja.csv",
-		"prefecture_jp.tsv",
-	} {
-		d, f := path.Split(files[i+1])
-		if !strings.HasSuffix(d, "testdata/") {
-			t.Errorf("invalid directory: %s", d)
-		}
-		if f != expected {
-			t.Errorf("invalid file name: %s, expected=%s", f, expected)
 		}
 	}
 }
