@@ -104,9 +104,9 @@ func (a *Application) putReport() error {
 }
 
 // newApplication creates `Application` object to set some options.
-func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
+func newApplication(recursive bool, writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
-	a.collector = newFileCollector(true, []string{
+	a.collector = newFileCollector(recursive, []string{
 		".csv",
 		".tsv",
 		".txt",

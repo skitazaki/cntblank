@@ -21,6 +21,7 @@ var (
 	cliOutNoHeader  = cli.Flag("output-without-header", "Output report does not have header line.").Bool()
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
 	cliSheet        = cli.Flag("sheet", "Excel sheet number which starts with 1.").Int()
+	cliRecursive    = cli.Flag("recursive", "Traverse directory recursively.").Short('r').Bool()
 	cliOutMeta      = cli.Flag("output-meta", "Put meta information.").Bool()
 	cliOutput       = cli.Flag("output", "Output file.").Short('o').String()
 	cliOutFormat    = cli.Flag("output-format", "Output format.").String()
@@ -55,7 +56,7 @@ func main() {
 	}
 	inDialect, outDialect := populateIODialect()
 	// Run main application logic.
-	app, err := newApplication(output, *cliOutFormat, outDialect)
+	app, err := newApplication(*cliRecursive, output, *cliOutFormat, outDialect)
 	if err != nil {
 		log.Fatal(err)
 		return
