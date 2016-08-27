@@ -80,6 +80,7 @@ Flags:
       --output-without-header  Output report does not have header line.
       --strict                 Check column size strictly.
       --sheet=SHEET            Excel sheet number which starts with 1.
+  -r, --recursive              Traverse directory recursively.
       --output-meta            Put meta information.
   -o, --output=OUTPUT          Output file.
       --output-format=OUTPUT-FORMAT

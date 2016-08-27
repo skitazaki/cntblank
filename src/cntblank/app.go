@@ -10,6 +10,7 @@ import (
 
 // Application object.
 type Application struct {
+	collector *FileCollector
 	reports   []Report
 	writer    *ReportWriter
 	logfields log.Fields
@@ -17,11 +18,21 @@ type Application struct {
 
 // Run application main logic.
 func (a *Application) Run(pathList []string, dialect *FileDialect) error {
-	a.reports = make([]Report, len(pathList))
-	for i, path := range pathList {
-		report, err := a.process(path, dialect)
+	var targets []TargetFile
+	if len(pathList) == 0 {
+		targets = append(targets, TargetFile{})
+	} else {
+		err := a.collector.CollectAll(pathList)
 		if err != nil {
-			log.Errorf("[%d] error while processing %s: %v", i+1, path, err)
+			return err
+		}
+		targets = a.collector.files
+	}
+	a.reports = make([]Report, len(targets))
+	for i, target := range targets {
+		report, err := a.process(target.path, dialect)
+		if err != nil {
+			log.Errorf("[%d] error while processing %s: %v", i+1, target.path, err)
 		}
 		if report != nil {
 			a.reports[i] = *report
@@ -30,8 +41,8 @@ func (a *Application) Run(pathList []string, dialect *FileDialect) error {
 	return a.putReport()
 }
 
-func (a *Application) process(path string, dialect *FileDialect) (report *Report, err error) {
-	reader, err := OpenFile(path, dialect)
+func (a *Application) process(target string, dialect *FileDialect) (report *Report, err error) {
+	reader, err := OpenFile(target, dialect)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +104,14 @@ func (a *Application) putReport() error {
 }
 
 // newApplication creates `Application` object to set some options.
-func newApplication(writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
+func newApplication(recursive bool, writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
 	a = new(Application)
+	a.collector = newFileCollector(recursive, []string{
+		".csv",
+		".tsv",
+		".txt",
+		".xlsx",
+	})
 	a.writer = NewReportWriter(writer, format, dialect)
 	return a, nil
 }
