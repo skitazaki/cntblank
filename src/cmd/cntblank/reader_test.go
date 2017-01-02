@@ -11,7 +11,7 @@ func getTestfilePath(fname string) (path string, err error) {
 	if err != nil {
 		return "", err
 	}
-	projectDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", "testdata"))
+	projectDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", "..", "testdata"))
 	if err != nil {
 		return "", err
 	}
