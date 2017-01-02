@@ -120,7 +120,7 @@ help you to count up pseudo blank cells.
 ## Development
 
 - Golang 1.7
-- `gb` for build tool
+- `gb`
 
 ### Setup and library dependency
 
@@ -146,16 +146,3 @@ $ make build
 
 To generate binary files for multiple architecture,
 simply run `make dist`.
-
-## Memorandum about development
-
-Packages to think about vendoring or reference:
-
-- [ImJasonH/csvstruct: Decode/encode CSV data into/from structs using reflection.](https://github.com/ImJasonH/csvstruct)
-- [guregu/null: reasonable handling of nullable values](https://github.com/guregu/null)
-- [lukasmartinelli/pgclimb: Export data from PostgreSQL into different data formats](https://github.com/lukasmartinelli/pgclimb)
-
-Tasks:
-
-- [ ] Parse whole sheets on Excel
-- [ ] Write results as Excel format

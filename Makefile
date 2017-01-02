@@ -15,8 +15,8 @@ setup:  ## Install development tools and libraries
 	go get github.com/jteeuwen/go-bindata/...
 	gb vendor restore
 
-build: src/cntblank/main.go src/cntblank/app.go src/cntblank/report.go  ## Build binary after linting source files
-	go-bindata -o src/${PROGRAM}/bindata.go templates
+build: src/cmd/cntblank/main.go src/cmd/cntblank/app.go src/cmd/cntblank/report.go  ## Build binary after linting source files
+	go-bindata -o src/cmd/${PROGRAM}/bindata.go templates
 	for f in `find src -type f` ; do \
 		go fmt $$f ; \
 		go vet $$f ; \

@@ -13,7 +13,7 @@ func TestExpandDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	rootDir, err := filepath.Abs(filepath.Join(pwd, "..", ".."))
+	rootDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", ".."))
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -51,7 +51,7 @@ func TestExpandDirWithExt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	rootDir, err := filepath.Abs(filepath.Join(pwd, "..", ".."))
+	rootDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", ".."))
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
