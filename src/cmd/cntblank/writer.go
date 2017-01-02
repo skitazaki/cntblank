@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
-
 	log "github.com/Sirupsen/logrus"
 
 	"csvhelper"
@@ -116,16 +113,7 @@ func (w *ReportWriter) Write(reports []Report) error {
 }
 
 func (w *ReportWriter) writeCsv(reports []Report) error {
-	wr := w.w
-	if w.dialect.Encoding == "sjis" {
-		log.Info("use ShiftJIS encoder for output.")
-		encoder := japanese.ShiftJIS.NewEncoder()
-		wr = transform.NewWriter(wr, encoder)
-	}
-	writer := csv.NewWriter(wr)
-	if w.dialect.Comma != 0 {
-		writer.Comma = w.dialect.Comma
-	}
+	writer := csvhelper.NewCsvWriter(w.w, w.dialect)
 	for i, report := range reports {
 		if i > 0 {
 			writer.Write(nil)

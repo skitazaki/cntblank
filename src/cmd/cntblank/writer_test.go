@@ -9,13 +9,11 @@ import (
 
 func TestReportWriterWithHeader(t *testing.T) {
 	buffer := &bytes.Buffer{}
-	dialect := &csvhelper.FileDialect{
-		HasHeader: true,
-	}
+	dialect, err := csvhelper.NewFileDialect("", "", true)
 	w := NewReportWriter(buffer, "", dialect)
 	s := make([]Report, 1)
 	s[0] = Report{}
-	err := w.Write(s)
+	err = w.Write(s)
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
 	}
@@ -28,14 +26,12 @@ func TestReportWriterWithHeader(t *testing.T) {
 
 func TestReportWriterWithMetadata(t *testing.T) {
 	buffer := &bytes.Buffer{}
-	dialect := &csvhelper.FileDialect{
-		HasMetadata: true,
-		HasHeader:   true,
-	}
+	dialect, err := csvhelper.NewFileDialect("", "", true)
+	dialect.HasMetadata = true
 	w := NewReportWriter(buffer, "", dialect)
 	s := make([]Report, 1)
 	s[0] = Report{}
-	err := w.Write(s)
+	err = w.Write(s)
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
 	}

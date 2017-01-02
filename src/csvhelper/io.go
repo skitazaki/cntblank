@@ -36,7 +36,7 @@ var defaults = FileDialect{
 
 // NewFileDialect creates new FileDialect instance.
 func NewFileDialect(delimiter, encoding string, hasHeader bool) (*FileDialect, error) {
-	var comma rune
+	comma := defaults.Comma
 	if len(delimiter) > 0 {
 		c, size := utf8.DecodeRuneInString(delimiter)
 		if size == utf8.RuneError {
