@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
@@ -10,25 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/tealeg/xlsx"
-)
 
-// FileDialect is a configuration for "csv.Reader".
-type FileDialect struct {
-	Encoding         string // file encoding (utf8 or sjis only)
-	Comma            rune   // field delimiter (set to ',' by NewReader)
-	Comment          rune   // comment character for start of line
-	FieldsPerRecord  int    // number of expected fields per record
-	LazyQuotes       bool   // allow lazy quotes
-	TrimLeadingSpace bool   // trim leading space
-	HasHeader        bool   // CSV file has header line
-	HasMetadata      bool   // meta data before header line
-	SheetNumber      int    // sheet number in Excel file which starts with 1
-}
+	"csvhelper"
+)
 
 // Reader is a generic file reader.
 type Reader struct {
@@ -44,12 +29,12 @@ type Reader struct {
 }
 
 // NewReader returns a new Reader that reads from r using dialect.
-func NewReader(r io.Reader, dialect *FileDialect) (reader *Reader, err error) {
+func NewReader(r io.Reader, dialect *csvhelper.FileDialect) (reader *Reader, err error) {
 	reader = &Reader{
 		columns: make(map[int]int),
 		logger:  log.WithFields(nil),
 	}
-	err = reader.setupCsvReader(bufio.NewReader(r), dialect)
+	reader.csvReader = csvhelper.NewCsvReader(r, dialect)
 	return
 }
 
@@ -68,7 +53,7 @@ func calcMd5Sum(path string) (md5hex string, err error) {
 }
 
 // OpenFile returns a new Reader that reads from path using dialect.
-func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
+func OpenFile(path string, dialect *csvhelper.FileDialect) (reader *Reader, err error) {
 	if path == "" {
 		return NewReader(os.Stdin, dialect)
 	}
@@ -110,20 +95,6 @@ func OpenFile(path string, dialect *FileDialect) (reader *Reader, err error) {
 	reader.logger = log.WithFields(log.Fields{"path": path})
 	reader.md5hex = md5hex
 	return
-}
-
-func (r *Reader) setupCsvReader(reader io.Reader, dialect *FileDialect) error {
-	if dialect.Encoding == "sjis" {
-		r.logger.Info("use ShiftJIS decoder for input.")
-		decoder := japanese.ShiftJIS.NewDecoder()
-		r.csvReader = csv.NewReader(transform.NewReader(reader, decoder))
-	} else {
-		r.csvReader = csv.NewReader(reader)
-	}
-	r.csvReader.Comma = dialect.Comma
-	r.csvReader.Comment = dialect.Comment
-	r.csvReader.FieldsPerRecord = dialect.FieldsPerRecord
-	return nil
 }
 
 func (r *Reader) Read() (record []string, err error) {

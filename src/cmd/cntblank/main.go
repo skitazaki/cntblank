@@ -3,20 +3,21 @@ package main
 import (
 	"io"
 	"os"
-	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"csvhelper"
 )
 
 // Command line options.
 var (
 	cli             = kingpin.New("cntblank", "Count blank cells on text-based tabular data.")
 	cliVerbose      = cli.Flag("verbose", "Set verbose mode on.").Short('v').Bool()
-	cliInEncoding   = cli.Flag("input-encoding", "Input encoding.").Short('e').String()
-	cliOutEncoding  = cli.Flag("output-encoding", "Output encoding.").Short('E').String()
-	cliInDelimiter  = cli.Flag("input-delimiter", "Input field delimiter.").String()
-	cliOutDelimiter = cli.Flag("output-delimiter", "Output field delmiter.").String()
+	cliInEncoding   = cli.Flag("input-encoding", "Input encoding.").Short('e').Default("utf8").String()
+	cliOutEncoding  = cli.Flag("output-encoding", "Output encoding.").Short('E').Default("utf8").String()
+	cliInDelimiter  = cli.Flag("input-delimiter", "Input field delimiter.").Default("\t").String()
+	cliOutDelimiter = cli.Flag("output-delimiter", "Output field delmiter.").Default("\t").String()
 	cliNoHeader     = cli.Flag("without-header", "Tabular does not have header line.").Bool()
 	cliOutNoHeader  = cli.Flag("output-without-header", "Output report does not have header line.").Bool()
 	cliStrict       = cli.Flag("strict", "Check column size strictly.").Bool()
@@ -68,59 +69,19 @@ func main() {
 	}
 }
 
-func populateIODialect() (inDialect *FileDialect, outDialect *FileDialect) {
-	// Convert delimiter type from string to rune. default is TAB.
-	inComma := '\t'
-	outComma := '\t'
-	if len(*cliInDelimiter) > 0 {
-		comma, size := utf8.DecodeRuneInString(*cliInDelimiter)
-		if size == utf8.RuneError {
-			log.Warn("input delimiter option is invalid, but continue running.")
-		} else {
-			inComma = comma
-		}
+func populateIODialect() (inDialect *csvhelper.FileDialect, outDialect *csvhelper.FileDialect) {
+	inDialect, err := csvhelper.NewFileDialect(*cliInDelimiter, *cliInEncoding, !*cliNoHeader)
+	if err != nil {
+		// TODO: report error.
 	}
-	if len(*cliOutDelimiter) > 0 {
-		comma, size := utf8.DecodeRuneInString(*cliOutDelimiter)
-		if size == utf8.RuneError {
-			log.Warn("output delimiter option is invalid, but continue running.")
-		} else {
-			outComma = comma
-		}
-	}
-	// Check encoding options. default is "utf8".
-	inEncoding := "utf8"
-	outEncoding := "utf8"
-	if len(*cliInEncoding) > 0 {
-		if *cliInEncoding == "sjis" {
-			inEncoding = *cliInEncoding
-		} else {
-			log.Warn("unknown input encoding: ", *cliInEncoding)
-		}
-	}
-	if len(*cliOutEncoding) > 0 {
-		if *cliOutEncoding == "sjis" {
-			outEncoding = *cliOutEncoding
-		} else {
-			log.Warn("unknown output encoding: ", *cliOutEncoding)
-		}
-	}
-	inDialect = &FileDialect{
-		Encoding:        inEncoding,
-		Comma:           inComma,
-		Comment:         '#',
-		FieldsPerRecord: -1,
-		HasHeader:       !*cliNoHeader,
-		SheetNumber:     *cliSheet,
-	}
+	inDialect.SheetNumber = *cliSheet
 	if *cliStrict {
 		inDialect.FieldsPerRecord = 0
 	}
-	outDialect = &FileDialect{
-		Encoding:    outEncoding,
-		Comma:       outComma,
-		HasHeader:   !*cliOutNoHeader,
-		HasMetadata: *cliOutMeta,
+	outDialect, err = csvhelper.NewFileDialect(*cliOutDelimiter, *cliOutEncoding, !*cliOutNoHeader)
+	if err != nil {
+		// TODO: report error.
 	}
+	outDialect.HasMetadata = *cliOutMeta
 	return
 }

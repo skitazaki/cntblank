@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"testing"
+
+	"csvhelper"
 )
 
 func TestReportWriterWithHeader(t *testing.T) {
 	buffer := &bytes.Buffer{}
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader: true,
 	}
 	w := NewReportWriter(buffer, "", dialect)
@@ -26,7 +28,7 @@ func TestReportWriterWithHeader(t *testing.T) {
 
 func TestReportWriterWithMetadata(t *testing.T) {
 	buffer := &bytes.Buffer{}
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasMetadata: true,
 		HasHeader:   true,
 	}

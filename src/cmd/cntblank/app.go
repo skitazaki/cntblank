@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
+
+	"csvhelper"
 )
 
 // Application object.
@@ -17,7 +19,7 @@ type Application struct {
 }
 
 // Run application main logic.
-func (a *Application) Run(pathList []string, dialect *FileDialect) error {
+func (a *Application) Run(pathList []string, dialect *csvhelper.FileDialect) error {
 	var targets []TargetFile
 	if len(pathList) == 0 {
 		targets = append(targets, TargetFile{})
@@ -41,7 +43,7 @@ func (a *Application) Run(pathList []string, dialect *FileDialect) error {
 	return a.putReport()
 }
 
-func (a *Application) process(target string, dialect *FileDialect) (report *Report, err error) {
+func (a *Application) process(target string, dialect *csvhelper.FileDialect) (report *Report, err error) {
 	reader, err := OpenFile(target, dialect)
 	if err != nil {
 		return nil, err
@@ -104,7 +106,7 @@ func (a *Application) putReport() error {
 }
 
 // newApplication creates `Application` object to set some options.
-func newApplication(recursive bool, writer io.Writer, format string, dialect *FileDialect) (a *Application, err error) {
+func newApplication(recursive bool, writer io.Writer, format string, dialect *csvhelper.FileDialect) (a *Application, err error) {
 	a = new(Application)
 	a.collector = newFileCollector(recursive, []string{
 		".csv",

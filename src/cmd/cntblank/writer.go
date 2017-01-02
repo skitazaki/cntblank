@@ -13,6 +13,8 @@ import (
 	"golang.org/x/text/transform"
 
 	log "github.com/Sirupsen/logrus"
+
+	"csvhelper"
 )
 
 // Format is output format
@@ -68,15 +70,15 @@ var ReportOutputFields = []string{
 
 // ReportWriter is a writer object to wrap csv writer.
 type ReportWriter struct {
-	dialect *FileDialect
+	dialect *csvhelper.FileDialect
 	w       io.Writer
 	format  Format
 }
 
 // NewReportWriter returns a new ReportWriter that writes to w.
-func NewReportWriter(w io.Writer, format string, dialect *FileDialect) *ReportWriter {
+func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect) *ReportWriter {
 	if dialect == nil {
-		dialect = &FileDialect{}
+		dialect = &csvhelper.FileDialect{}
 	}
 	var f Format
 	switch strings.ToLower(format) {
