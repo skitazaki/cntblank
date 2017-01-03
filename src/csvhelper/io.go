@@ -26,11 +26,10 @@ type FileDialect struct {
 var defaults = FileDialect{
 	Comma:            ',',
 	Comment:          '#',
-	Encoding:         "utf8",
+	Encoding:         "",
 	FieldsPerRecord:  -1,
 	HasHeader:        true,
 	LazyQuotes:       true,
-	SheetNumber:      1,
 	TrimLeadingSpace: true,
 }
 
