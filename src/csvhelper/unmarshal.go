@@ -61,6 +61,7 @@ func Unmarshal(record []string, v interface{}, strict bool) error {
 	return nil
 }
 
+// FieldMismatch represents error of expected fields and actual fields.
 type FieldMismatch struct {
 	expected, found int
 }
@@ -69,6 +70,7 @@ func (e *FieldMismatch) Error() string {
 	return "CSV line fields mismatch. Expected " + strconv.Itoa(e.expected) + " found " + strconv.Itoa(e.found)
 }
 
+// UnsupportedType represents error of mismatched type.
 type UnsupportedType struct {
 	Type string
 }
