@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"csvhelper"
 )
 
 func getTestfilePath(fname string) (path string, err error) {
@@ -19,7 +21,7 @@ func getTestfilePath(fname string) (path string, err error) {
 }
 
 func TestReader(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader: true,
 		Comma:     '\t',
 	}
@@ -59,7 +61,7 @@ func TestReader(t *testing.T) {
 }
 
 func TestExcelReader(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader: true,
 	}
 	path, err := getTestfilePath("addrcode_jp.xlsx")
@@ -96,7 +98,7 @@ func TestExcelReader(t *testing.T) {
 }
 
 func TestExcelReaderSheetOption(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader:   false,
 		SheetNumber: 2,
 	}
@@ -133,7 +135,7 @@ func TestExcelReaderSheetOption(t *testing.T) {
 }
 
 func TestExcelReaderExceedSheetNumber(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		SheetNumber: 10,
 	}
 	path, err := getTestfilePath("addrcode_jp.xlsx")

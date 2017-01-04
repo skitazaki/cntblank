@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
-
 	log "github.com/Sirupsen/logrus"
+
+	"csvhelper"
 )
 
 // Format is output format
@@ -68,15 +67,15 @@ var ReportOutputFields = []string{
 
 // ReportWriter is a writer object to wrap csv writer.
 type ReportWriter struct {
-	dialect *FileDialect
+	dialect *csvhelper.FileDialect
 	w       io.Writer
 	format  Format
 }
 
 // NewReportWriter returns a new ReportWriter that writes to w.
-func NewReportWriter(w io.Writer, format string, dialect *FileDialect) *ReportWriter {
+func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect) *ReportWriter {
 	if dialect == nil {
-		dialect = &FileDialect{}
+		dialect = &csvhelper.FileDialect{}
 	}
 	var f Format
 	switch strings.ToLower(format) {
@@ -114,16 +113,7 @@ func (w *ReportWriter) Write(reports []Report) error {
 }
 
 func (w *ReportWriter) writeCsv(reports []Report) error {
-	wr := w.w
-	if w.dialect.Encoding == "sjis" {
-		log.Info("use ShiftJIS encoder for output.")
-		encoder := japanese.ShiftJIS.NewEncoder()
-		wr = transform.NewWriter(wr, encoder)
-	}
-	writer := csv.NewWriter(wr)
-	if w.dialect.Comma != 0 {
-		writer.Comma = w.dialect.Comma
-	}
+	writer := csvhelper.NewCsvWriter(w.w, w.dialect)
 	for i, report := range reports {
 		if i > 0 {
 			writer.Write(nil)

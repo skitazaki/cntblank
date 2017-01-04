@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"testing"
+
+	"csvhelper"
 )
 
 func TestApplication(t *testing.T) {
@@ -11,8 +13,8 @@ A,B
 C,D
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(false, buffer, "", &FileDialect{})
-	dialect := &FileDialect{
+	app, _ := newApplication(false, buffer, "", &csvhelper.FileDialect{})
+	dialect := &csvhelper.FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
@@ -40,8 +42,8 @@ PI,3.1415926535897932384
 ネイピア数,2.718281828459045235360287471352
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(false, buffer, "", &FileDialect{})
-	dialect := &FileDialect{
+	app, _ := newApplication(false, buffer, "", &csvhelper.FileDialect{})
+	dialect := &csvhelper.FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
@@ -104,8 +106,8 @@ PI ,3.1415926535897932384 ,"blank after value "
  PI , 3.1415926535897932384 ," blank both of value "
 `)
 	buffer := &bytes.Buffer{}
-	app, _ := newApplication(false, buffer, "", &FileDialect{})
-	dialect := &FileDialect{
+	app, _ := newApplication(false, buffer, "", &csvhelper.FileDialect{})
+	dialect := &csvhelper.FileDialect{
 		Comma:     ',',
 		HasHeader: true,
 	}
