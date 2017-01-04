@@ -20,23 +20,31 @@ type Application struct {
 
 // Run application main logic.
 func (a *Application) Run(pathList []string, dialect *csvhelper.FileDialect) error {
-	var targets []TargetFile
+	var files []File
 	if len(pathList) == 0 {
-		targets = append(targets, TargetFile{})
+		files = append(files, File{})
 	} else {
 		err := a.collector.CollectAll(pathList)
 		if err != nil {
 			return err
 		}
-		targets = a.collector.files
+		files = a.collector.files
 	}
-	a.reports = make([]Report, len(targets))
-	for i, target := range targets {
-		report, err := a.process(target.path, dialect)
+	a.reports = make([]Report, len(files))
+	for i, file := range files {
+		report, err := a.process(file.path, dialect)
 		if err != nil {
-			log.Errorf("[%d] error while processing %s: %v", i+1, target.path, err)
+			log.Errorf("[%d] error while processing %s: %v", i+1, file.path, err)
 		}
 		if report != nil {
+			if file.path != "" {
+				md5hex, err := file.Checksum()
+				if err != nil {
+					log.Errorf("[%d] fail to calculate MD5: %v", i+1, err)
+				} else {
+					report.MD5hex = md5hex
+				}
+			}
 			a.reports[i] = *report
 		}
 	}
@@ -61,7 +69,6 @@ func (a *Application) cntblank(reader *Reader, hasHeader bool) (report *Report, 
 	if len(reader.path) > 0 {
 		report.Filename = filepath.Base(reader.path)
 	}
-	report.MD5hex = reader.md5hex
 	if hasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()

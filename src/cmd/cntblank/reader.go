@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
 	"encoding/csv"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -18,7 +16,6 @@ import (
 // Reader is a generic file reader.
 type Reader struct {
 	path      string
-	md5hex    string
 	line      int
 	columns   map[int]int
 	err       int
@@ -38,28 +35,10 @@ func NewReader(r io.Reader, dialect *csvhelper.FileDialect) (reader *Reader, err
 	return
 }
 
-// calcMd5Sum calculate MD5 digest and returns hex string.
-func calcMd5Sum(path string) (md5hex string, err error) {
-	hasher := md5.New()
-	fp, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer fp.Close()
-	if _, err := io.Copy(hasher, fp); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(hasher.Sum(nil)), nil
-}
-
 // OpenFile returns a new Reader that reads from path using dialect.
 func OpenFile(path string, dialect *csvhelper.FileDialect) (reader *Reader, err error) {
 	if path == "" {
 		return NewReader(os.Stdin, dialect)
-	}
-	md5hex, err := calcMd5Sum(path)
-	if err != nil {
-		return nil, err
 	}
 	extension := filepath.Ext(path)
 	if extension == ".xlsx" {
@@ -93,7 +72,6 @@ func OpenFile(path string, dialect *csvhelper.FileDialect) (reader *Reader, err 
 	}
 	reader.path = path
 	reader.logger = log.WithFields(log.Fields{"path": path})
-	reader.md5hex = md5hex
 	return
 }
 
