@@ -24,11 +24,9 @@ type FileCollector struct {
 
 // File object.
 type File struct {
-	path      string
-	size      int64
-	modTime   time.Time
-	filename  string
-	extention string
+	path    string
+	size    int64
+	modTime time.Time
 }
 
 // CollectAll collects all files in list of paths.
@@ -81,13 +79,10 @@ func (c *FileCollector) Collect(path string) error {
 }
 
 func (c *FileCollector) dispatch(p string, fileInfo os.FileInfo) error {
-	filename := fileInfo.Name()
 	t := File{
-		path:      p,
-		size:      fileInfo.Size(),
-		modTime:   fileInfo.ModTime(),
-		filename:  filename,
-		extention: strings.ToLower(path.Ext(filename)),
+		path:    p,
+		size:    fileInfo.Size(),
+		modTime: fileInfo.ModTime(),
 	}
 	c.files = append(c.files, t)
 	return nil
@@ -111,6 +106,16 @@ func (c *FileCollector) isTarget(p string) bool {
 		}
 	}
 	return false
+}
+
+// Name returns file name.
+func (f *File) Name() string {
+	return path.Base(f.path)
+}
+
+// Dir returns directory path except file name.
+func (f *File) Dir() string {
+	return path.Dir(f.path)
 }
 
 // Checksum returns MD5 checksum as hex string.
