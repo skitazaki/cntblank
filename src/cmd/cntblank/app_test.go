@@ -18,8 +18,9 @@ C,D
 		Comma:     ',',
 		HasHeader: true,
 	}
+	report := new(Report)
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect.HasHeader)
+	err = app.cntblank(report, reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -47,8 +48,9 @@ PI,3.1415926535897932384
 		Comma:     ',',
 		HasHeader: true,
 	}
+	report := new(Report)
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect.HasHeader)
+	err = app.cntblank(report, reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}
@@ -111,8 +113,9 @@ PI ,3.1415926535897932384 ,"blank after value "
 		Comma:     ',',
 		HasHeader: true,
 	}
+	report := new(Report)
 	reader, err := NewReader(bytes.NewBuffer(input), dialect)
-	report, err := app.cntblank(reader, dialect.HasHeader)
+	err = app.cntblank(report, reader, dialect.HasHeader)
 	if err != nil {
 		t.Error(err)
 	}

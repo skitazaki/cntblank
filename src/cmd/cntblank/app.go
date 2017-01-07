@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -20,60 +19,54 @@ type Application struct {
 
 // Run application main logic.
 func (a *Application) Run(pathList []string, dialect *csvhelper.FileDialect) error {
-	var targets []TargetFile
+	var files []File
 	if len(pathList) == 0 {
-		targets = append(targets, TargetFile{})
+		files = append(files, File{})
 	} else {
 		err := a.collector.CollectAll(pathList)
 		if err != nil {
 			return err
 		}
-		targets = a.collector.files
+		files = a.collector.files
 	}
-	a.reports = make([]Report, len(targets))
-	for i, target := range targets {
-		report, err := a.process(target.path, dialect)
+	a.reports = make([]Report, len(files))
+	for i, file := range files {
+		report := newReport(file)
+		err := a.process(report, dialect)
 		if err != nil {
-			log.Errorf("[%d] error while processing %s: %v", i+1, target.path, err)
+			log.Errorf("[%d] error while processing %s: %v", i+1, file.path, err)
+			continue
 		}
-		if report != nil {
-			a.reports[i] = *report
-		}
+		a.reports[i] = *report
 	}
 	return a.putReport()
 }
 
-func (a *Application) process(target string, dialect *csvhelper.FileDialect) (report *Report, err error) {
-	reader, err := OpenFile(target, dialect)
+func (a *Application) process(report *Report, dialect *csvhelper.FileDialect) error {
+	reader, err := OpenFile(report.Path, dialect)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer reader.Close()
 
-	return a.cntblank(reader, dialect.HasHeader)
+	return a.cntblank(report, reader, dialect.HasHeader)
 }
 
 // Run application core logic.
-func (a *Application) cntblank(reader *Reader, hasHeader bool) (report *Report, err error) {
+func (a *Application) cntblank(report *Report, reader *Reader, hasHeader bool) error {
 	logger := log.WithFields(a.logfields)
-	report = new(Report)
-	report.Path = reader.path
-	if len(reader.path) > 0 {
-		report.Filename = filepath.Base(reader.path)
-	}
-	report.MD5hex = reader.md5hex
 	if hasHeader {
 		// Use first line as header name if flag is not specified.
 		record, err := reader.Read()
 		if err == io.EOF {
-			return nil, fmt.Errorf("reader is empty")
+			return fmt.Errorf("reader is empty")
 		} else if err != nil {
-			return nil, err
+			return err
 		}
 		err = report.header(record)
 		if err != nil {
 			logger.Error(err)
-			return nil, err
+			return err
 		}
 		logger.Info("start parsing with ", len(report.Fields), " columns.")
 	} else {
@@ -97,7 +90,7 @@ func (a *Application) cntblank(reader *Reader, hasHeader bool) (report *Report, 
 	}
 	logger.Infof("get %d records with %d columns",
 		report.Records, len(report.Fields))
-	return report, nil
+	return nil
 }
 
 func (a *Application) putReport() error {

@@ -33,9 +33,6 @@ func TestReader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	if reader.md5hex != "4884d04103df0fd8a9e792866ca0b870" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
-	}
 	for i, expected := range []struct {
 		record []string
 	}{
@@ -72,9 +69,6 @@ func TestExcelReader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
-	}
 	for i, expected := range []struct {
 		record []string
 	}{
@@ -109,9 +103,6 @@ func TestExcelReaderSheetOption(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
-	}
-	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string

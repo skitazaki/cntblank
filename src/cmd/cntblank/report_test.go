@@ -3,7 +3,31 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestNewReport_Empty(t *testing.T) {
+	a := assert.New(t)
+	r := newReport(File{})
+	a.Empty(r.Path, "Path sould be empty")
+	a.Empty(r.Filename, "Filename should be empty")
+	a.Empty(r.MD5hex, "MD5hex should be empty")
+	a.Empty(r.HasHeader, "HasHeader should be false")
+	a.Empty(r.Records, "Records should be zero")
+	a.Empty(r.Fields, "Fields should be empty")
+}
+
+func TestNewReport_Filename(t *testing.T) {
+	a := assert.New(t)
+	r := newReport(File{path: "/path/to/file"})
+	a.Equal("/path/to/file", r.Path, "Path is different")
+	a.Equal("file", r.Filename, "Filename is different")
+	a.Empty(r.MD5hex, "MD5hex should be empty")
+	a.Empty(r.HasHeader, "HasHeader should be false")
+	a.Empty(r.Records, "Records should be zero")
+	a.Empty(r.Fields, "Fields should be empty")
+}
 
 func TestReport(t *testing.T) {
 	report := new(Report)

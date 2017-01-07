@@ -1,7 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,19 +17,16 @@ import (
 
 // FileCollector object.
 type FileCollector struct {
-	files      []TargetFile
+	files      []File
 	recursive  bool
 	extentions []string
 }
 
-// TargetFile object.
-type TargetFile struct {
-	path      string
-	size      int64
-	modTime   time.Time
-	filename  string
-	extention string
-	md5sum    string
+// File object.
+type File struct {
+	path    string
+	size    int64
+	modTime time.Time
 }
 
 // CollectAll collects all files in list of paths.
@@ -78,13 +79,10 @@ func (c *FileCollector) Collect(path string) error {
 }
 
 func (c *FileCollector) dispatch(p string, fileInfo os.FileInfo) error {
-	filename := fileInfo.Name()
-	t := TargetFile{
-		path:      p,
-		size:      fileInfo.Size(),
-		modTime:   fileInfo.ModTime(),
-		filename:  filename,
-		extention: strings.ToLower(path.Ext(filename)),
+	t := File{
+		path:    p,
+		size:    fileInfo.Size(),
+		modTime: fileInfo.ModTime(),
 	}
 	c.files = append(c.files, t)
 	return nil
@@ -108,6 +106,33 @@ func (c *FileCollector) isTarget(p string) bool {
 		}
 	}
 	return false
+}
+
+// Name returns file name.
+func (f *File) Name() string {
+	return path.Base(f.path)
+}
+
+// Dir returns directory path except file name.
+func (f *File) Dir() string {
+	return path.Dir(f.path)
+}
+
+// Checksum returns MD5 checksum as hex string.
+func (f *File) Checksum() (string, error) {
+	if f.path == "" {
+		return "", fmt.Errorf("path is empty")
+	}
+	fp, err := os.Open(f.path)
+	if err != nil {
+		return "", err
+	}
+	defer fp.Close()
+	hasher := md5.New()
+	if _, err := io.Copy(hasher, fp); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func newFileCollector(recursive bool, extentions []string) *FileCollector {

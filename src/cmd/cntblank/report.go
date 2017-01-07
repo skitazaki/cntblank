@@ -211,3 +211,15 @@ func (r *Report) parseRecord(record []string) (nullCount int) {
 	}
 	return nullCount
 }
+
+func newReport(f File) *Report {
+	r := new(Report)
+	if f.path != "" {
+		r.Path = f.path
+		r.Filename = f.Name()
+		if md5hex, err := f.Checksum(); err == nil {
+			r.MD5hex = md5hex
+		}
+	}
+	return r
+}
