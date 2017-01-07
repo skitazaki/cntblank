@@ -6,46 +6,12 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 
 	"csvhelper"
 )
-
-// Format is output format
-type Format int
-
-const (
-	// Csv is delimiter separated values
-	Csv = iota + 1
-	// Excel is Microsoft office suite
-	Excel
-	// JSON is JSON object
-	JSON
-	// Text uses template
-	Text
-	// HTML uses template
-	HTML
-)
-
-func (s Format) String() string {
-	switch s {
-	case Csv:
-		return "CSV"
-	case Excel:
-		return "Excel"
-	case JSON:
-		return "JSON"
-	case Text:
-		return "Text"
-	case HTML:
-		return "HTML"
-	default:
-		return "Unknown"
-	}
-}
 
 // ReportOutputFields is a header line to write.
 var ReportOutputFields = []string{
@@ -77,20 +43,9 @@ func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect)
 	if dialect == nil {
 		dialect = &csvhelper.FileDialect{}
 	}
-	var f Format
-	switch strings.ToLower(format) {
-	case "csv":
-		f = Csv
-	case "excel":
-		f = Excel
-	case "json":
-		f = JSON
-	case "text":
-		f = Text
-	case "html":
-		f = HTML
-	default:
-		f = Csv
+	f := CSV // default format is CSV
+	if format != "" {
+		f = formatFrom(format)
 	}
 	return &ReportWriter{
 		dialect: dialect,
@@ -101,7 +56,7 @@ func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect)
 
 func (w *ReportWriter) Write(reports []Report) error {
 	switch w.format {
-	case Csv:
+	case CSV:
 		return w.writeCsv(reports)
 	case JSON:
 		return w.writeJSON(reports)
