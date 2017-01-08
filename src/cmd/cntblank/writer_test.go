@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"csvhelper"
 )
 
@@ -58,4 +60,16 @@ func TestReportWriterWithoutMetadata(t *testing.T) {
 	if out != expected {
 		t.Errorf("out=%q want %q", out, expected)
 	}
+}
+
+func TestReportWriter_JSON(t *testing.T) {
+	expected := `[{"header":false,"records":0,"fields":null}]`
+	a := assert.New(t)
+	buffer := &bytes.Buffer{}
+	w := NewReportWriter(buffer, "json", nil)
+	s := make([]Report, 1)
+	s[0] = Report{}
+	err := w.Write(s)
+	a.Nil(err)
+	a.Equal(expected, buffer.String())
 }

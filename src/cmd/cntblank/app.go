@@ -13,7 +13,7 @@ import (
 type Application struct {
 	collector *FileCollector
 	reports   []Report
-	writer    *ReportWriter
+	writer    ReportWriter
 	logfields log.Fields
 }
 

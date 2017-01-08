@@ -13,43 +13,56 @@ import (
 	"csvhelper"
 )
 
-// ReportWriter is a writer object to wrap csv writer.
-type ReportWriter struct {
-	dialect *csvhelper.FileDialect
-	w       io.Writer
-	format  Format
+// ReportWriter writes multiple reports as specified file format.
+type ReportWriter interface {
+	Write([]Report) error
 }
 
-// NewReportWriter returns a new ReportWriter that writes to w.
-func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect) *ReportWriter {
-	if dialect == nil {
-		dialect = &csvhelper.FileDialect{}
-	}
+// ReportCSVWriter is a writer object to wrap csv writer.
+type ReportCSVWriter struct {
+	dialect *csvhelper.FileDialect
+	w       io.Writer
+}
+
+// ReportJSONWriter is a writer object to write report as JSON format.
+type ReportJSONWriter struct {
+	w io.Writer
+}
+
+// ReportHTMLWriter is a writer object to write report as HTML format.
+type ReportHTMLWriter struct {
+	w io.Writer
+}
+
+// NewReportWriter returns a new ReportWriter that writes to w by given format.
+func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect) ReportWriter {
 	f := CSV // default format is CSV
 	if format != "" {
 		f = formatFrom(format)
 	}
-	return &ReportWriter{
-		dialect: dialect,
-		w:       w,
-		format:  f,
-	}
-}
-
-func (w *ReportWriter) Write(reports []Report) error {
-	switch w.format {
+	switch f {
 	case CSV:
-		return w.writeCsv(reports)
+		if dialect == nil {
+			dialect = &csvhelper.FileDialect{}
+		}
+		return &ReportCSVWriter{
+			dialect: dialect,
+			w:       w,
+		}
 	case JSON:
-		return w.writeJSON(reports)
+		return &ReportJSONWriter{
+			w: w,
+		}
 	case HTML:
-		return w.writeHTML(reports)
+		return &ReportHTMLWriter{
+			w: w,
+		}
 	}
-	log.Errorf("not implemented yet: format=%v", w.format)
+	log.Errorf("NewReportWriter: not implemented format %q", format)
 	return nil
 }
 
-func (w *ReportWriter) writeCsv(reports []Report) error {
+func (w *ReportCSVWriter) Write(reports []Report) error {
 	writer := csvhelper.NewCsvWriter(w.w, w.dialect)
 	for i, report := range reports {
 		if i > 0 {
@@ -62,7 +75,7 @@ func (w *ReportWriter) writeCsv(reports []Report) error {
 	return writer.Error()
 }
 
-func (w *ReportWriter) writeCsvOne(writer *csv.Writer, report Report) error {
+func (w *ReportCSVWriter) writeCsvOne(writer *csv.Writer, report Report) error {
 	if w.dialect.HasMetadata {
 		preamble := make([]string, 4)
 		if len(report.Path) > 0 {
@@ -99,7 +112,7 @@ func (w *ReportWriter) writeCsvOne(writer *csv.Writer, report Report) error {
 	return writer.Error()
 }
 
-func (w *ReportWriter) writeJSON(reports []Report) error {
+func (w *ReportJSONWriter) Write(reports []Report) error {
 	b, err := json.Marshal(reports)
 	if err != nil {
 		return err
@@ -108,7 +121,7 @@ func (w *ReportWriter) writeJSON(reports []Report) error {
 	return nil
 }
 
-func (w *ReportWriter) writeHTML(reports []Report) error {
+func (w *ReportHTMLWriter) Write(reports []Report) error {
 	path := "templates/index.html"
 	b, err := Asset(path)
 	if err != nil {
