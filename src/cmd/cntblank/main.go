@@ -45,6 +45,8 @@ func main() {
 	// Set output stream.
 	var output io.Writer
 	if len(*cliOutput) > 0 {
+		// TODO: Check file name extension to detect output format automatically.
+		// If output-format option is empty, extract file extention.
 		fp, err := os.Create(*cliOutput)
 		if err != nil {
 			log.Fatal(err)

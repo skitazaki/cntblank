@@ -30,10 +30,15 @@ func TestFormatFrom(t *testing.T) {
 	}{
 		{"CSV", CSV},
 		{"csv", CSV},
+		{".tsv", CSV},
+		{".txt", CSV},
 		{"Excel", Excel},
+		{"xlsx", Excel},
+		{".xlsx", Excel},
 		{"JSON", JSON},
 		{"Text", Text},
 		{"HTML", HTML},
+		{".xls", Unknown},
 	} {
 		a.Equal(tc.want, formatFrom(tc.str))
 	}

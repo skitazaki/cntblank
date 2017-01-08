@@ -35,12 +35,8 @@ type ReportHTMLWriter struct {
 }
 
 // NewReportWriter returns a new ReportWriter that writes to w by given format.
-func NewReportWriter(w io.Writer, format string, dialect *csvhelper.FileDialect) ReportWriter {
-	f := CSV // default format is CSV
-	if format != "" {
-		f = formatFrom(format)
-	}
-	switch f {
+func NewReportWriter(w io.Writer, format Format, dialect *csvhelper.FileDialect) ReportWriter {
+	switch format {
 	case CSV:
 		if dialect == nil {
 			dialect = &csvhelper.FileDialect{}

@@ -42,10 +42,12 @@ func (f Format) String() string {
 }
 
 func formatFrom(s string) Format {
-	switch strings.ToLower(s) {
-	case "csv":
+	// Compare strings in lower case removing initial dot in case of
+	// given string is file extention.
+	switch strings.ToLower(strings.TrimPrefix(s, ".")) {
+	case "csv", "tsv", "txt":
 		return CSV
-	case "excel":
+	case "excel", "xlsx":
 		return Excel
 	case "json":
 		return JSON
