@@ -39,6 +39,25 @@ type ReportField struct {
 	fullWidth int
 }
 
+func (r ReportField) header() []string {
+	return []string{
+		"seq",
+		"Name",
+		"#Blank",
+		"%Blank",
+		"MinLength",
+		"MaxLength",
+		"#Int",
+		"#Float",
+		"#Bool",
+		"#Time",
+		"Minimum",
+		"Maximum",
+		"#True",
+		"#False",
+	}
+}
+
 func (r *ReportField) format(total int) []string {
 	s := make([]string, 14)
 	s[1] = r.Name

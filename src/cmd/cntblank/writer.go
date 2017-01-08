@@ -13,24 +13,6 @@ import (
 	"csvhelper"
 )
 
-// ReportOutputFields is a header line to write.
-var ReportOutputFields = []string{
-	"seq",
-	"Name",
-	"#Blank",
-	"%Blank",
-	"MinLength",
-	"MaxLength",
-	"#Int",
-	"#Float",
-	"#Bool",
-	"#Time",
-	"Minimum",
-	"Maximum",
-	"#True",
-	"#False",
-}
-
 // ReportWriter is a writer object to wrap csv writer.
 type ReportWriter struct {
 	dialect *csvhelper.FileDialect
@@ -106,7 +88,7 @@ func (w *ReportWriter) writeCsvOne(writer *csv.Writer, report Report) error {
 	}
 	// Put header line.
 	if w.dialect.HasHeader {
-		writer.Write(ReportOutputFields)
+		writer.Write(ReportField{}.header())
 	}
 	// Put each field report.
 	for i, f := range report.Fields {
