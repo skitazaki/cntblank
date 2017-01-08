@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -42,11 +43,11 @@ func main() {
 	if *cliVerbose {
 		log.SetLevel(log.DebugLevel)
 	}
-	// Set output stream.
+	// Set output stream and output format.
 	var output io.Writer
-	if len(*cliOutput) > 0 {
-		// TODO: Check file name extension to detect output format automatically.
-		// If output-format option is empty, extract file extention.
+	var format string
+	format = *cliOutFormat
+	if *cliOutput != "" {
 		fp, err := os.Create(*cliOutput)
 		if err != nil {
 			log.Fatal(err)
@@ -54,12 +55,15 @@ func main() {
 		}
 		defer fp.Close()
 		output = fp
+		if format == "" {
+			format = filepath.Ext(*cliOutput)
+		}
 	} else {
 		output = os.Stdout
 	}
 	inDialect, outDialect := populateIODialect()
 	// Run main application logic.
-	app, err := newApplication(*cliRecursive, output, *cliOutFormat, outDialect)
+	app, err := newApplication(*cliRecursive, output, format, outDialect)
 	if err != nil {
 		log.Fatal(err)
 		return

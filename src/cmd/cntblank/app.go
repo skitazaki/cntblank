@@ -115,5 +115,8 @@ func newApplication(recursive bool, writer io.Writer, format string, dialect *cs
 		".xlsx",
 	})
 	a.writer = NewReportWriter(writer, f, dialect)
+	if a.writer == nil {
+		return nil, fmt.Errorf("no writer available")
+	}
 	return a, nil
 }
