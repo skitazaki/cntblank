@@ -19,6 +19,8 @@ func TestNewReportWriter(t *testing.T) {
 	a.NotNil(w)
 	w = NewReportWriter(nil, HTML, nil)
 	a.NotNil(w)
+	w = NewReportWriter(nil, Excel, nil)
+	a.NotNil(w)
 }
 
 func TestReportWriterWithHeader(t *testing.T) {
