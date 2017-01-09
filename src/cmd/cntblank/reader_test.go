@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"csvhelper"
 )
 
 func getTestfilePath(fname string) (path string, err error) {
@@ -11,7 +13,7 @@ func getTestfilePath(fname string) (path string, err error) {
 	if err != nil {
 		return "", err
 	}
-	projectDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", "testdata"))
+	projectDir, err := filepath.Abs(filepath.Join(pwd, "..", "..", "..", "testdata"))
 	if err != nil {
 		return "", err
 	}
@@ -19,7 +21,7 @@ func getTestfilePath(fname string) (path string, err error) {
 }
 
 func TestReader(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader: true,
 		Comma:     '\t',
 	}
@@ -30,9 +32,6 @@ func TestReader(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
-	}
-	if reader.md5hex != "4884d04103df0fd8a9e792866ca0b870" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string
@@ -59,7 +58,7 @@ func TestReader(t *testing.T) {
 }
 
 func TestExcelReader(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader: true,
 	}
 	path, err := getTestfilePath("addrcode_jp.xlsx")
@@ -69,9 +68,6 @@ func TestExcelReader(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
-	}
-	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string
@@ -96,7 +92,7 @@ func TestExcelReader(t *testing.T) {
 }
 
 func TestExcelReaderSheetOption(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		HasHeader:   false,
 		SheetNumber: 2,
 	}
@@ -107,9 +103,6 @@ func TestExcelReaderSheetOption(t *testing.T) {
 	reader, err := OpenFile(path, dialect)
 	if err != nil {
 		t.Fatalf("%v", err)
-	}
-	if reader.md5hex != "04770cd319075f0141dd56ce7a12161a" {
-		t.Fatalf("%v is invalid file: %v", reader.path, reader.md5hex)
 	}
 	for i, expected := range []struct {
 		record []string
@@ -133,7 +126,7 @@ func TestExcelReaderSheetOption(t *testing.T) {
 }
 
 func TestExcelReaderExceedSheetNumber(t *testing.T) {
-	dialect := &FileDialect{
+	dialect := &csvhelper.FileDialect{
 		SheetNumber: 10,
 	}
 	path, err := getTestfilePath("addrcode_jp.xlsx")

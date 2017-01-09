@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var TimeLayouts = []string{
+var timeLayouts = []string{
 	time.ANSIC,
 	time.UnixDate,
 	time.RubyDate,
@@ -29,7 +29,7 @@ var TimeLayouts = []string{
 }
 
 func parseDateTime(s string) (t time.Time, err error) {
-	for _, layout := range TimeLayouts {
+	for _, layout := range timeLayouts {
 		t, err = time.Parse(layout, s)
 		if err == nil {
 			return

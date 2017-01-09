@@ -15,11 +15,13 @@ setup:  ## Install development tools and libraries
 	go get github.com/jteeuwen/go-bindata/...
 	gb vendor restore
 
-build: src/cntblank/main.go src/cntblank/app.go src/cntblank/report.go  ## Build binary after linting source files
-	go-bindata -o src/${PROGRAM}/bindata.go templates
-	go fmt src/${PROGRAM}/*
-	go vet src/${PROGRAM}/*
-	goimports -w src/${PROGRAM}/*
+build: src/cmd/cntblank/main.go src/cmd/cntblank/app.go src/cmd/cntblank/report.go  ## Build binary after linting source files
+	go-bindata -o src/cmd/${PROGRAM}/bindata.go templates
+	for f in `find src -type f` ; do \
+		go fmt $$f ; \
+		go vet $$f ; \
+		goimports -w $$f ; \
+	done
 	gb build
 
 test:  ## Run the unit tests
@@ -34,6 +36,7 @@ local: build  ## Run some tests on local machine
 	./bin/cntblank --output-without-header --output-meta --output-format=csv --output=_build/t.txt testdata/addrcode_jp.xlsx testdata/prefecture_jp.tsv
 	./bin/cntblank --output-format=json --output=_build/t.json testdata/addrcode_jp.xlsx
 	./bin/cntblank --output-format=html --output=_build/t.html testdata/addrcode_jp.xlsx --input-delimiter=, testdata/elementary_school_teacher_ja.csv
+	./bin/cntblank --output=_build/t.xlsx testdata/addrcode_jp.xlsx --input-delimiter=, testdata/elementary_school_teacher_ja.csv
 
 dist: clean darwin linux windows  ## Build distribution binaries
 

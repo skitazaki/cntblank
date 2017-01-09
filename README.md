@@ -7,6 +7,8 @@ Count blank cells on text-based tabular data.
 
 Short examples:
 
+It can parse tab-delimited data file, which contains only 2 columns.
+
 ```bash
 $ ./cntblank --output-meta testdata/prefecture_jp.tsv
 INFO[0000] start parsing with 2 columns.                 path=testdata/prefecture_jp.tsv
@@ -19,7 +21,8 @@ seq     Name    #Blank  %Blank  MinLength       MaxLength       #Int    #Float  
 2       都道府県        0       0.0000  3       4
 ```
 
-Since file argument is optional, it accepts standard input.
+Since it accepts standard input when no file arguments are given,
+you can pipe another output such as downloaded contents.
 
 ```bash
 $ curl -sL https://raw.githubusercontent.com/datasets/language-codes/master/data/ietf-language-tags.csv |
@@ -33,7 +36,7 @@ seq            Name           #Blank         %Blank         MinLength      MaxLe
 6              file           0              0.0000         6              18
 ```
 
-Also accepts Excel file whose extension is ".xlsx".
+It also accepts Microsoft Excel file whose extension is ".xlsx".
 
 ```bash
 $ ./cntblank --output-delimiter=, testdata/addrcode_jp.xlsx
@@ -50,76 +53,12 @@ seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maxim
 7,Column007,1788,1.0000,,,,,,,,,,
 ```
 
-## Full Usage
-
-`--help` shows the details.
-
-- Default input/output encoding is "UTF-8" and it also accepts only "sjis" value on the option.
-- Default input/output delimiter is TAB.
-- Meta-information is file path, field length, and number of records.
-- If no file path arguments are given, process standard input.
-- Also support JSON and HTML output.
-
-```text
-usage: cntblank [<flags>] [<tabfile>...]
-
-Count blank cells on text-based tabular data.
-
-Flags:
-      --help                   Show context-sensitive help (also try --help-long and --help-man).
-  -v, --verbose                Set verbose mode on.
-  -e, --input-encoding=INPUT-ENCODING
-                               Input encoding.
-  -E, --output-encoding=OUTPUT-ENCODING
-                               Output encoding.
-      --input-delimiter=INPUT-DELIMITER
-                               Input field delimiter.
-      --output-delimiter=OUTPUT-DELIMITER
-                               Output field delmiter.
-      --without-header         Tabular does not have header line.
-      --output-without-header  Output report does not have header line.
-      --strict                 Check column size strictly.
-      --sheet=SHEET            Excel sheet number which starts with 1.
-      --output-meta            Put meta information.
-  -o, --output=OUTPUT          Output file.
-      --output-format=OUTPUT-FORMAT
-                               Output format.
-      --version                Show application version.
-
-Args:
-  [<tabfile>]  Tabular data files.
-```
-
-### Output fields
-
-| Name | Description |
-|------|-------------|
-| seq | Sequential number which starts with one. |
-| Name | Field name from first header line, otherwise "ColumnNNN" where NNN is sequential number. |
-| #Blank | Count of blank cells. |
-| %Blank | Percentage of blank cells. |
-| MinLength | Minimum length of valid cells. |
-| MaxLength | Maximum length of valid cells. |
-| #Int | Count of integer type cells. This may be blank. |
-| #Float | Count of float type cells. This may be blank. |
-| #Bool | Count of bool type cells. This may be blank. |
-| #Time | Count of time type cells. This may be blank. |
-| Minimum | Minimum value after guessing data type. |
-| Maximum | Maximum value after guessing data type. |
-| #True | Count of cells which should be treated as boolean true. |
-| #False | Count of cells which should be treated as boolean false. |
-
-Note that "1" is interpreted as boolean true and "0" is also interpreted as boolean false.
-Therefore, if a column is integer field, "#True" represents the count of "1" and "#False"
-represents the count of "0" in the field.
-Since some buggy data files sometimes include "0" as null accidentally, this feature may
-help you to count up pseudo blank cells.
-
-
 ## Development
 
-- Golang 1.6
-- `gb`
+Requirements:
+
+- Golang 1.7
+- `gb` for build tool
 
 ### Setup and library dependency
 
@@ -143,5 +82,77 @@ $ gb vendor list
 $ make build
 ```
 
+*test* target calls `gb test`.
+
+```bash
+$ make test
+```
+
+*local* target runs program against under *testdata/* directory after building binary.
+
+```bash
+$ make local
+```
+
 To generate binary files for multiple architecture,
 simply run `make dist`.
+
+## Changes
+
+v0.7:
+
+- Support Excel writer
+- Expand files walking directories.
+- Introduce *null* package on dependency to separate *csvhelper* package.
+- Move to Go 1.7.
+
+v0.6:
+
+- Support JSON and HTML writer.
+- Add `--output-format` option on command line arguments.
+
+v0.5:
+
+- Support Excel reader
+- Migrate build tool to `gb`.
+- Update encoding package to handle cp932 charset range.
+
+v0.4:
+
+- Change output tabular layout.
+- Parse several date formats.
+- Accept multiple files on command line arguments.
+- Introduce *govalidate* package on dependency.
+- Add `Makefile` to setup and build.
+- Integrate Travis-CI.
+
+v0.3:
+
+- Change the output format of blank ratio for Excel pasting.
+- Trim blank characters.
+
+v0.2:
+
+- Add length and range of values on output report.
+- Move to Go 1.5.
+
+v0.1:
+
+- Just first release.
+
+
+## Memorandum about development
+
+Packages to think about vendoring or reference:
+
+- [ImJasonH/csvstruct: Decode/encode CSV data into/from structs using reflection.](https://github.com/ImJasonH/csvstruct)
+- [lukasmartinelli/pgclimb: Export data from PostgreSQL into different data formats](https://github.com/lukasmartinelli/pgclimb)
+
+Tasks:
+
+- [x] Write results as Excel format
+- [ ] Parse whole sheets on Excel
+- [ ] Guess field data type for SQL CREATE statement (CHAR, VARCHAR, NUMERIC, DATE, TIMESTAMP)
+- [ ] Generate SQL CREATE statement when output format is SQL
+- [ ] Given "-" as `--output` option, treat it as standard output
+- [ ] Use *GoConvey* to run test cases on local development

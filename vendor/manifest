@@ -4,13 +4,13 @@
 		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
-			"revision": "4b6ea7319e214d98c938f12692336f7ca9348d6b",
+			"revision": "08a8a7c27e3d058a8989316a850daad1c10bf4ab",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/alecthomas/template",
 			"repository": "https://github.com/alecthomas/template",
-			"revision": "14fd436dd20c3cc65242a9f396b61bfc8a3926fc",
+			"revision": "a0175ee3bccc567396460bf5acd36800cb10c49c",
 			"branch": "master"
 		},
 		{
@@ -22,33 +22,61 @@
 		{
 			"importpath": "github.com/asaskevich/govalidator",
 			"repository": "https://github.com/asaskevich/govalidator",
-			"revision": "50f582311784a55b42018d88643ccfceadf7ab61",
+			"revision": "593d64559f7600f29581a3ee42177f5dbded27a9",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"revision": "346938d642f2ec3594ed81d874461961cd0faa76",
+			"branch": "master",
+			"path": "/spew"
+		},
+		{
+			"importpath": "github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/pmezard/go-difflib",
+			"revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+			"branch": "master",
+			"path": "/difflib"
+		},
+		{
+			"importpath": "github.com/stretchr/testify/assert",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
+			"branch": "master",
+			"path": "/assert"
+		},
+		{
+			"importpath": "github.com/stretchr/testify/require",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
+			"branch": "master",
+			"path": "/require"
 		},
 		{
 			"importpath": "github.com/tealeg/xlsx",
 			"repository": "https://github.com/tealeg/xlsx",
-			"revision": "2b59b97479d67bfd7c2b5c10397de54ae049c107",
+			"revision": "bd0ba13fd8a4fe9a529b18e09c23a886f08f7d9a",
 			"branch": "master"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/encoding"
 		},
 		{
 			"importpath": "golang.org/x/text/encoding/japanese",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/encoding/japanese"
 		},
 		{
 			"importpath": "golang.org/x/text/transform",
 			"repository": "https://go.googlesource.com/text",
-			"revision": "1b466db55e0ba5d56ef5315c728216b42f796491",
+			"revision": "d69c40b4be55797923cec7457fac7a244d91a9b6",
 			"branch": "master",
 			"path": "/transform"
 		},
@@ -61,13 +89,19 @@
 		{
 			"importpath": "gopkg.in/alecthomas/kingpin.v2",
 			"repository": "https://gopkg.in/alecthomas/kingpin.v2",
-			"revision": "8cccfa8eb2e3183254457fb1749b2667fbc364c7",
+			"revision": "e5900212cbf65b181d3d8e08308ef06a01d117cf",
 			"branch": "master"
 		},
 		{
 			"importpath": "gopkg.in/gemnasium/logrus-airbrake-hook.v2",
 			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
 			"revision": "31e6fd4bd5a98d8ee7673d24bc54ec73c31810dd",
+			"branch": "master"
+		},
+		{
+			"importpath": "gopkg.in/guregu/null.v3",
+			"repository": "https://gopkg.in/guregu/null.v3",
+			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
 			"branch": "master"
 		}
 	]
