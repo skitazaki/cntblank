@@ -241,3 +241,27 @@ func TestReportFieldFormat(t *testing.T) {
 		}
 	}
 }
+
+func TestReportFieldHeader(t *testing.T) {
+	a := assert.New(t)
+	header := ReportField{}.header()
+	a.Equal(14, len(header))
+	for i, s := range []string{
+		"seq",
+		"Name",
+		"#Blank",
+		"%Blank",
+		"MinLength",
+		"MaxLength",
+		"#Int",
+		"#Float",
+		"#Bool",
+		"#Time",
+		"Minimum",
+		"Maximum",
+		"#True",
+		"#False",
+	} {
+		a.Equal(s, header[i], "differ header[%d] index element", i)
+	}
+}

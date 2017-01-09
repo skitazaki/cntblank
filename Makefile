@@ -36,6 +36,7 @@ local: build  ## Run some tests on local machine
 	./bin/cntblank --output-without-header --output-meta --output-format=csv --output=_build/t.txt testdata/addrcode_jp.xlsx testdata/prefecture_jp.tsv
 	./bin/cntblank --output-format=json --output=_build/t.json testdata/addrcode_jp.xlsx
 	./bin/cntblank --output-format=html --output=_build/t.html testdata/addrcode_jp.xlsx --input-delimiter=, testdata/elementary_school_teacher_ja.csv
+	./bin/cntblank --output=_build/t.xlsx testdata/addrcode_jp.xlsx --input-delimiter=, testdata/elementary_school_teacher_ja.csv
 
 dist: clean darwin linux windows  ## Build distribution binaries
 

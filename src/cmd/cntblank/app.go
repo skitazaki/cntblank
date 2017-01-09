@@ -13,7 +13,7 @@ import (
 type Application struct {
 	collector *FileCollector
 	reports   []Report
-	writer    *ReportWriter
+	writer    ReportWriter
 	logfields log.Fields
 }
 
@@ -100,6 +100,13 @@ func (a *Application) putReport() error {
 
 // newApplication creates `Application` object to set some options.
 func newApplication(recursive bool, writer io.Writer, format string, dialect *csvhelper.FileDialect) (a *Application, err error) {
+	f := CSV // default output format is CSV
+	if format != "" {
+		f = formatFrom(format)
+		if f == Unknown {
+			return nil, fmt.Errorf("unknown format %q", format)
+		}
+	}
 	a = new(Application)
 	a.collector = newFileCollector(recursive, []string{
 		".csv",
@@ -107,6 +114,9 @@ func newApplication(recursive bool, writer io.Writer, format string, dialect *cs
 		".txt",
 		".xlsx",
 	})
-	a.writer = NewReportWriter(writer, format, dialect)
+	a.writer = NewReportWriter(writer, f, dialect)
+	if a.writer == nil {
+		return nil, fmt.Errorf("no writer available")
+	}
 	return a, nil
 }
