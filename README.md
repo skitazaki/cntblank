@@ -153,3 +153,6 @@ Tasks:
 - [x] Write results as Excel format
 - [ ] Parse whole sheets on Excel
 - [ ] Guess field data type for SQL CREATE statement (CHAR, VARCHAR, NUMERIC, DATE, TIMESTAMP)
+- [ ] Generate SQL CREATE statement when output format is SQL
+- [ ] Given "-" as `--output` option, treat it as standard output
+- [ ] Use *GoConvey* to run test cases on local development
