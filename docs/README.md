@@ -1,6 +1,3 @@
-[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=master)](http://travis-ci.org/skitazaki/cntblank/tree/master)
-[![Build Status](https://secure.travis-ci.org/skitazaki/cntblank.png?branch=develop)](http://travis-ci.org/skitazaki/cntblank)
-
 # Count Blank Cells
 
 Count blank cells on text-based tabular data.
@@ -50,6 +47,41 @@ seq,Name,#Blank,%Blank,MinLength,MaxLength,#Int,#Float,#Bool,#Time,Minimum,Maxim
 7,Column007,1788,1.0000,,,,,,,,,,
 ```
 
+## Output
+
+It produces reports for each file in several formats.
+The report contains list of field summary in addition to file name and its checksum.
+Field summary is consists from field name and count of blanks, and data type indicator.
+
+Although default report format is CSV, you can specify `--output-format` option explicitly.
+Given `--output` option and its file extension is either of ".html", ".json", or ".xlsx", it automatically
+changes output format along with extension.
+
+### Output fields
+
+| Name | Description |
+|------|-------------|
+| seq | Sequential number which starts with one. |
+| Name | Field name from first header line, otherwise "ColumnNNN" where NNN is sequential number. |
+| #Blank | Count of blank cells. |
+| %Blank | Percentage of blank cells. |
+| MinLength | Minimum length of valid cells. |
+| MaxLength | Maximum length of valid cells. |
+| #Int | Count of integer type cells. This may be blank. |
+| #Float | Count of float type cells. This may be blank. |
+| #Bool | Count of bool type cells. This may be blank. |
+| #Time | Count of time type cells. This may be blank. |
+| Minimum | Minimum value after guessing data type. |
+| Maximum | Maximum value after guessing data type. |
+| #True | Count of cells which should be treated as boolean true. |
+| #False | Count of cells which should be treated as boolean false. |
+
+Note that "1" is interpreted as boolean true and "0" is also interpreted as boolean false.
+Therefore, if a column is integer field, "#True" represents the count of "1" and "#False"
+represents the count of "0" in the field.
+Since some buggy data files sometimes include "0" as null accidentally, this feature may
+help you to count up pseudo blank cells.
+
 ## Full Usage
 
 `--help` shows the details.
@@ -90,59 +122,3 @@ Flags:
 Args:
   [<tabfile>]  Tabular data files.
 ```
-
-### Output fields
-
-| Name | Description |
-|------|-------------|
-| seq | Sequential number which starts with one. |
-| Name | Field name from first header line, otherwise "ColumnNNN" where NNN is sequential number. |
-| #Blank | Count of blank cells. |
-| %Blank | Percentage of blank cells. |
-| MinLength | Minimum length of valid cells. |
-| MaxLength | Maximum length of valid cells. |
-| #Int | Count of integer type cells. This may be blank. |
-| #Float | Count of float type cells. This may be blank. |
-| #Bool | Count of bool type cells. This may be blank. |
-| #Time | Count of time type cells. This may be blank. |
-| Minimum | Minimum value after guessing data type. |
-| Maximum | Maximum value after guessing data type. |
-| #True | Count of cells which should be treated as boolean true. |
-| #False | Count of cells which should be treated as boolean false. |
-
-Note that "1" is interpreted as boolean true and "0" is also interpreted as boolean false.
-Therefore, if a column is integer field, "#True" represents the count of "1" and "#False"
-represents the count of "0" in the field.
-Since some buggy data files sometimes include "0" as null accidentally, this feature may
-help you to count up pseudo blank cells.
-
-
-## Development
-
-- Golang 1.7
-- `gb`
-
-### Setup and library dependency
-
-`Makefile` includes *setup* target calling `gb vendor restore`:
-
-```bash
-$ make setup
-```
-
-To see libraries:
-
-```bash
-$ gb vendor list
-```
-
-### Build
-
-*build* target calls `go fmt`, `go vet`, `goimports`, and `gb build`.
-
-```bash
-$ make build
-```
-
-To generate binary files for multiple architecture,
-simply run `make dist`.
