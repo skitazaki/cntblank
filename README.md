@@ -97,6 +97,50 @@ $ make local
 To generate binary files for multiple architecture,
 simply run `make dist`.
 
+## Changes
+
+v0.7:
+
+- Support Excel writer
+- Expand files walking directories.
+- Introduce *null* package on dependency to separate *csvhelper* package.
+- Move to Go 1.7.
+
+v0.6:
+
+- Support JSON and HTML writer.
+- Add `--output-format` option on command line arguments.
+
+v0.5:
+
+- Support Excel reader
+- Migrate build tool to `gb`.
+- Update encoding package to handle cp932 charset range.
+
+v0.4:
+
+- Change output tabular layout.
+- Parse several date formats.
+- Accept multiple files on command line arguments.
+- Introduce *govalidate* package on dependency.
+- Add `Makefile` to setup and build.
+- Integrate Travis-CI.
+
+v0.3:
+
+- Change the output format of blank ratio for Excel pasting.
+- Trim blank characters.
+
+v0.2:
+
+- Add length and range of values on output report.
+- Move to Go 1.5.
+
+v0.1:
+
+- Just first release.
+
+
 ## Memorandum about development
 
 Packages to think about vendoring or reference:

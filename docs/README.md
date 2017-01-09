@@ -82,6 +82,49 @@ represents the count of "0" in the field.
 Since some buggy data files sometimes include "0" as null accidentally, this feature may
 help you to count up pseudo blank cells.
 
+## HTML output
+
+```bash
+$ cntblank --output=t.html testdata/prefecture_jp.tsv
+```
+
+![HTML sample](html_sample.png)
+
+
+### JSON output
+
+```bash
+$ cntblank --output-format=json testdata/prefecture_jp.tsv | jq
+[
+  {
+    "path": "testdata/prefecture_jp.tsv",
+    "filename": "prefecture_jp.tsv",
+    "md5": "4884d04103df0fd8a9e792866ca0b870",
+    "header": true,
+    "records": 47,
+    "fields": [
+      {
+        "name": "都道府県コード",
+        "blank": 0,
+        "minLength": 2,
+        "maxLength": 2,
+        "minimum": 1,
+        "maximum": 47,
+        "typeInt": 47,
+        "typeFloat": 47
+      },
+      {
+        "name": "都道府県",
+        "blank": 0,
+        "minLength": 3,
+        "maxLength": 4
+      }
+    ]
+  }
+]
+```
+
+
 ## Full Usage
 
 `--help` shows the details.
